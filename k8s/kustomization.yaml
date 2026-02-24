@@ -5,6 +5,7 @@ resources:
 - namespace.yaml
 - gateway/deployment.yaml
 - gateway/service.yaml
+- gateway/ingress.yaml
 - user-service/deployment.yaml
 - user-service/service.yaml
 - integration-service/deployment.yaml
