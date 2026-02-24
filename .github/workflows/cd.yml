@@ -31,6 +31,14 @@ jobs:
         id: vars
         run: echo "sha7=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
+      - name: Copy JARs to Docker contexts
+        run: |
+          cp gateway/target/gateway-*.jar gateway/
+          cp user-service/target/user-service-*.jar user-service/
+          cp integration-service/target/integration-service-*.jar integration-service/
+          cp ai-router-service/target/ai-router-service-*.jar ai-router-service/
+          cp briefing-service/target/briefing-service-*.jar briefing-service/
+
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
