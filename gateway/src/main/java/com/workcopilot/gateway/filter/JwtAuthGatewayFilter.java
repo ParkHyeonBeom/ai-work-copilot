@@ -54,7 +54,12 @@ public class JwtAuthGatewayFilter implements GatewayFilter, Ordered {
             return chain.filter(exchange);
         }
 
-        // 공개 경로는 JWT 검증 없이 통과
+        // API 경로가 아닌 요청은 프론트엔드이므로 JWT 검증 없이 통과
+        if (!path.startsWith("/api/")) {
+            return chain.filter(exchange);
+        }
+
+        // 공개 API 경로는 JWT 검증 없이 통과
         if (isPublicPath(path)) {
             log.debug("공개 경로 접근 허용: {}", path);
             return chain.filter(exchange);
