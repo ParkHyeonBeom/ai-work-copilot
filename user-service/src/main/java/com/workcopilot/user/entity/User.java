@@ -4,6 +4,8 @@ import com.workcopilot.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -30,10 +32,26 @@ public class User extends BaseEntity {
     @Builder.Default
     private boolean onboardingCompleted = false;
 
+    @Column(columnDefinition = "TEXT")
+    private String googleAccessToken;
+
+    @Column(columnDefinition = "TEXT")
+    private String googleRefreshToken;
+
+    private Instant googleTokenExpiresAt;
+
     @Convert(converter = UserSettingsConverter.class)
     @Column(columnDefinition = "TEXT")
     @Builder.Default
     private UserSettings settings = UserSettings.defaults();
+
+    public void updateGoogleTokens(String accessToken, String refreshToken, Instant expiresAt) {
+        this.googleAccessToken = accessToken;
+        if (refreshToken != null) {
+            this.googleRefreshToken = refreshToken;
+        }
+        this.googleTokenExpiresAt = expiresAt;
+    }
 
     public void updateSettings(UserSettings settings) {
         this.settings = settings;

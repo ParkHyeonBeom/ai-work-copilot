@@ -2,6 +2,7 @@ package com.workcopilot.user.service;
 
 import com.workcopilot.common.exception.BusinessException;
 import com.workcopilot.common.exception.ErrorCode;
+import com.workcopilot.user.dto.GoogleTokenResponse;
 import com.workcopilot.user.dto.OnboardingRequest;
 import com.workcopilot.user.dto.UpdateSettingsRequest;
 import com.workcopilot.user.dto.UserResponse;
@@ -69,6 +70,11 @@ public class UserService {
 
         log.info("온보딩 완료: userId={}", userId);
         return UserResponse.from(user);
+    }
+
+    public GoogleTokenResponse getGoogleToken(Long userId) {
+        User user = findUserById(userId);
+        return GoogleTokenResponse.from(user);
     }
 
     private User findUserById(Long userId) {

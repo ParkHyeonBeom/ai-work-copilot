@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -23,6 +26,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
+    private final OAuth2AuthorizedClientService authorizedClientService;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -30,7 +34,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+        OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
+        OAuth2User oAuth2User = oauthToken.getPrincipal();
 
         String googleId = oAuth2User.getAttribute("sub");
         String email = oAuth2User.getAttribute("email");
@@ -41,6 +46,19 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 .orElseGet(() -> createUser(googleId, email, name, picture));
 
         user.updateProfile(name, picture);
+
+        // Google OAuth2 토큰 저장
+        OAuth2AuthorizedClient authorizedClient = authorizedClientService.loadAuthorizedClient(
+                oauthToken.getAuthorizedClientRegistrationId(), oauthToken.getName());
+        if (authorizedClient != null && authorizedClient.getAccessToken() != null) {
+            String googleAccessToken = authorizedClient.getAccessToken().getTokenValue();
+            String googleRefreshToken = authorizedClient.getRefreshToken() != null
+                    ? authorizedClient.getRefreshToken().getTokenValue() : null;
+            user.updateGoogleTokens(googleAccessToken, googleRefreshToken,
+                    authorizedClient.getAccessToken().getExpiresAt());
+            log.info("Google 토큰 저장: userId={}, hasRefreshToken={}", user.getId(), googleRefreshToken != null);
+        }
+
         userRepository.save(user);
 
         String accessToken = jwtProvider.generateAccessToken(user);
