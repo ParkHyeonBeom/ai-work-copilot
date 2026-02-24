@@ -52,3 +52,8 @@ frontend/             → React 18 + Vite (포트 5173)
 
 ## 개발 가이드
 상세 구현 가이드: `docs/dev-guide.md` → `/guide N` 커맨드로 Day별 참조
+
+## Google OAuth2
+- Google Cloud Console에서 OAuth2 Client ID/Secret 발급 완료
+- 환경변수: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (K8s Secret으로 관리)
+- 리디렉션 URI: `http://localhost:30081/login/oauth2/code/google`
