@@ -23,7 +23,7 @@ spec:
             - containerPort: 8084
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: "local"
+              value: "k8s"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

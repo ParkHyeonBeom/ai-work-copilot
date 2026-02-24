@@ -22,6 +22,10 @@ spring:
       ddl-auto: create-drop
     show-sql: false
 
+springdoc:
+  api-docs:
+    enabled: false
+
 jwt:
   secret: test-secret-key-for-unit-testing-only-minimum-256-bits-required-here
 

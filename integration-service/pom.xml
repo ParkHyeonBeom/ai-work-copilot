@@ -95,6 +95,12 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- API Docs -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+
         <!-- Test: Spring Security -->
         <dependency>
             <groupId>org.springframework.security</groupId>

@@ -108,3 +108,44 @@ spring:
 ai:
   ollama:
     enabled: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: k8s
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+  datasource:
+    url: jdbc:h2:mem:airouterdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:sk-dummy}
+      chat:
+        options:
+          model: gpt-4o
+          temperature: 0.3
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://homeserver:11434}
+      chat:
+        options:
+          model: llama3.1:8b-instruct-q4_K_M
+
+integration-service:
+  url: http://integration-service:8082
+
+ai:
+  ollama:
+    enabled: ${OLLAMA_ENABLED:false}
