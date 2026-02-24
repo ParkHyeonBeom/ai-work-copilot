@@ -1,11 +1,17 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-24T12:43:12.676Z",
+  "lastUpdated": "2026-02-24T13:13:21.999Z",
   "activeFeatures": [
     "exception",
     "util",
     "config",
-    "dto"
+    "dto",
+    "entity",
+    "repository",
+    "security",
+    "service",
+    "controller",
+    "user"
   ],
   "primaryFeature": "exception",
   "features": {
@@ -44,9 +50,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T12:42:39.452Z",
-        "lastUpdated": "2026-02-24T12:42:39.452Z"
+        "lastUpdated": "2026-02-24T13:09:23.578Z"
       },
-      "lastFile": "/Users/gusqja0213/IdeaProjects/ai-work-copilot/common/src/main/java/com/workcopilot/common/config/JpaConfig.java"
+      "lastFile": "/Users/gusqja0213/IdeaProjects/ai-work-copilot/user-service/src/main/java/com/workcopilot/user/config/JpaConfig.java"
     },
     "dto": {
       "phase": "do",
@@ -57,9 +63,87 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T12:43:12.675Z",
-        "lastUpdated": "2026-02-24T12:43:12.676Z"
+        "lastUpdated": "2026-02-24T13:05:05.907Z"
       },
-      "lastFile": "/Users/gusqja0213/IdeaProjects/ai-work-copilot/common/src/test/java/com/workcopilot/common/dto/ApiResponseTest.java"
+      "lastFile": "/Users/gusqja0213/IdeaProjects/ai-work-copilot/user-service/src/main/java/com/workcopilot/user/dto/OnboardingRequest.java"
+    },
+    "entity": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T13:01:37.256Z",
+        "lastUpdated": "2026-02-24T13:01:49.341Z"
+      },
+      "lastFile": "/Users/gusqja0213/IdeaProjects/ai-work-copilot/user-service/src/main/java/com/workcopilot/user/entity/User.java"
+    },
+    "repository": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T13:01:58.038Z",
+        "lastUpdated": "2026-02-24T13:01:58.038Z"
+      },
+      "lastFile": "/Users/gusqja0213/IdeaProjects/ai-work-copilot/user-service/src/main/java/com/workcopilot/user/repository/UserRepository.java"
+    },
+    "security": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T13:02:15.433Z",
+        "lastUpdated": "2026-02-24T13:05:34.520Z"
+      },
+      "lastFile": "/Users/gusqja0213/IdeaProjects/ai-work-copilot/user-service/src/test/java/com/workcopilot/user/security/JwtProviderTest.java"
+    },
+    "service": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T13:05:13.222Z",
+        "lastUpdated": "2026-02-24T13:05:44.400Z"
+      },
+      "lastFile": "/Users/gusqja0213/IdeaProjects/ai-work-copilot/user-service/src/test/java/com/workcopilot/user/service/UserServiceTest.java"
+    },
+    "controller": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T13:05:16.839Z",
+        "lastUpdated": "2026-02-24T13:13:21.999Z"
+      },
+      "lastFile": "/Users/gusqja0213/IdeaProjects/ai-work-copilot/user-service/src/test/java/com/workcopilot/user/controller/UserControllerTest.java"
+    },
+    "user": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T13:09:18.398Z",
+        "lastUpdated": "2026-02-24T13:09:18.398Z"
+      },
+      "lastFile": "/Users/gusqja0213/IdeaProjects/ai-work-copilot/user-service/src/main/java/com/workcopilot/user/UserServiceApplication.java"
     }
   },
   "pipeline": {
@@ -70,7 +154,7 @@
   "session": {
     "startedAt": "2026-02-24T12:33:15.876Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-02-24T12:43:12.676Z"
+    "lastActivity": "2026-02-24T13:13:21.999Z"
   },
   "history": [
     {
@@ -106,6 +190,174 @@
     {
       "timestamp": "2026-02-24T12:43:12.676Z",
       "feature": "dto",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:01:37.256Z",
+      "feature": "entity",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:01:42.120Z",
+      "feature": "entity",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:01:45.111Z",
+      "feature": "entity",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:01:49.341Z",
+      "feature": "entity",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:01:58.038Z",
+      "feature": "repository",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:02:15.433Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:02:22.616Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:04:23.379Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:04:28.636Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:04:44.672Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:05:01.412Z",
+      "feature": "dto",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:05:04.278Z",
+      "feature": "dto",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:05:05.907Z",
+      "feature": "dto",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:05:13.222Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:05:16.839Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:05:34.520Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:05:44.400Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:05:53.813Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:08:36.423Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:09:18.398Z",
+      "feature": "user",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:09:23.578Z",
+      "feature": "config",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:09:34.354Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:10:30.475Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:10:49.006Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:10:54.134Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:11:39.545Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:13:16.855Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T13:13:21.999Z",
+      "feature": "controller",
       "phase": "do",
       "action": "updated"
     }
