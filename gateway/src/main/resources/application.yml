@@ -34,6 +34,7 @@ spring:
               - "http://localhost:5173"
               - "https://ai-work-copilot-phb.kro.kr"
               - "https://*.trycloudflare.com"
+              - "https://*.ngrok-free.dev"
             allowedMethods:
               - GET
               - POST

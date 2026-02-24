@@ -108,7 +108,7 @@ spring:
               - https://www.googleapis.com/auth/calendar
               - https://www.googleapis.com/auth/gmail.readonly
               - https://www.googleapis.com/auth/drive.readonly
-            redirect-uri: "http://100.95.227.98:30081/login/oauth2/code/google"
+            redirect-uri: "https://nonnaval-tragicomical-eliana.ngrok-free.dev/login/oauth2/code/google"
 
   data:
     redis:
