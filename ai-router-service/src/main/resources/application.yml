@@ -1,0 +1,39 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: ai-router-service
+  profiles:
+    active: local
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:sk-dummy}
+      chat:
+        options:
+          model: gpt-4o
+          temperature: 0.3
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      chat:
+        options:
+          model: llama3.1:8b-instruct-q4_K_M
+      embedding:
+        options:
+          model: nomic-embed-text
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+milvus:
+  host: ${MILVUS_HOST:localhost}
+  port: ${MILVUS_PORT:19530}
