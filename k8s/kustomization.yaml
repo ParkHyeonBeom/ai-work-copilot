@@ -14,6 +14,8 @@ resources:
 - ai-router-service/service.yaml
 - briefing-service/deployment.yaml
 - briefing-service/service.yaml
+- frontend/deployment.yaml
+- frontend/service.yaml
 
 images:
 - name: ghcr.io/parkhyeonbeom/workcopilot-ai-router-service
@@ -31,3 +33,5 @@ images:
 - name: ghcr.io/parkhyeonbeom/workcopilot-user-service
   newName: ghcr.io/parkhyeonbeom/workcopilot-user-service
   newTag: 8e9c0c2
+- name: ghcr.io/parkhyeonbeom/workcopilot-frontend
+  newTag: latest

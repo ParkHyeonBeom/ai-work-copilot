@@ -71,6 +71,11 @@ jobs:
           docker build -t ghcr.io/parkhyeonbeom/workcopilot-briefing-service:${{ steps.vars.outputs.sha7 }} briefing-service/
           docker push ghcr.io/parkhyeonbeom/workcopilot-briefing-service:${{ steps.vars.outputs.sha7 }}
 
+      - name: Build & Push frontend
+        run: |
+          docker build -t ghcr.io/parkhyeonbeom/workcopilot-frontend:${{ steps.vars.outputs.sha7 }} frontend/
+          docker push ghcr.io/parkhyeonbeom/workcopilot-frontend:${{ steps.vars.outputs.sha7 }}
+
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v2
 
@@ -82,7 +87,8 @@ jobs:
             ghcr.io/parkhyeonbeom/workcopilot-user-service=ghcr.io/parkhyeonbeom/workcopilot-user-service:${{ steps.vars.outputs.sha7 }} \
             ghcr.io/parkhyeonbeom/workcopilot-integration-service=ghcr.io/parkhyeonbeom/workcopilot-integration-service:${{ steps.vars.outputs.sha7 }} \
             ghcr.io/parkhyeonbeom/workcopilot-ai-router-service=ghcr.io/parkhyeonbeom/workcopilot-ai-router-service:${{ steps.vars.outputs.sha7 }} \
-            ghcr.io/parkhyeonbeom/workcopilot-briefing-service=ghcr.io/parkhyeonbeom/workcopilot-briefing-service:${{ steps.vars.outputs.sha7 }}
+            ghcr.io/parkhyeonbeom/workcopilot-briefing-service=ghcr.io/parkhyeonbeom/workcopilot-briefing-service:${{ steps.vars.outputs.sha7 }} \
+            ghcr.io/parkhyeonbeom/workcopilot-frontend=ghcr.io/parkhyeonbeom/workcopilot-frontend:${{ steps.vars.outputs.sha7 }}
 
       - name: Commit and push updated tags
         run: |

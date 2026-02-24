@@ -33,6 +33,7 @@ spring:
             allowedOrigins:
               - "http://localhost:5173"
               - "https://ai-work-copilot-phb.kro.kr"
+              - "https://*.trycloudflare.com"
             allowedMethods:
               - GET
               - POST
@@ -82,3 +83,7 @@ spring:
           uri: http://briefing-service:8084
           predicates:
             - Path=/api/briefings/**
+        - id: frontend
+          uri: http://frontend:80
+          predicates:
+            - Path=/**
