@@ -48,7 +48,7 @@
         <milvus-sdk.version>2.4.3</milvus-sdk.version>
 
         <!-- API Docs -->
-        <springdoc.version>2.7.0</springdoc.version>
+        <springdoc.version>2.6.0</springdoc.version>
 
         <!-- Util -->
         <jjwt.version>0.12.6</jjwt.version>
