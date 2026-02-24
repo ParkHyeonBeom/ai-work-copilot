@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: integration-service
-          image: workcopilot/integration-service:latest
-          imagePullPolicy: Never
+          image: ghcr.io/parkhyeonbeom/workcopilot-integration-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8082
           env:

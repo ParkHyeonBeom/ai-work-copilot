@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - gateway/deployment.yaml
+  - gateway/service.yaml
+  - user-service/deployment.yaml
+  - user-service/service.yaml
+  - integration-service/deployment.yaml
+  - integration-service/service.yaml
+  - ai-router-service/deployment.yaml
+  - ai-router-service/service.yaml
+  - briefing-service/deployment.yaml
+  - briefing-service/service.yaml
+
+images:
+  - name: ghcr.io/parkhyeonbeom/workcopilot-gateway
+    newTag: latest
+  - name: ghcr.io/parkhyeonbeom/workcopilot-user-service
+    newTag: latest
+  - name: ghcr.io/parkhyeonbeom/workcopilot-integration-service
+    newTag: latest
+  - name: ghcr.io/parkhyeonbeom/workcopilot-ai-router-service
+    newTag: latest
+  - name: ghcr.io/parkhyeonbeom/workcopilot-briefing-service
+    newTag: latest

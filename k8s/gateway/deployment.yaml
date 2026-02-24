@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: workcopilot/gateway:latest
-          imagePullPolicy: Never
+          image: ghcr.io/parkhyeonbeom/workcopilot-gateway:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:

@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: briefing-service
-          image: workcopilot/briefing-service:latest
-          imagePullPolicy: Never
+          image: ghcr.io/parkhyeonbeom/workcopilot-briefing-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8084
           env:

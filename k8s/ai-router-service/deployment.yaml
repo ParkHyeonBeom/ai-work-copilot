@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: ai-router-service
-          image: workcopilot/ai-router-service:latest
-          imagePullPolicy: Never
+          image: ghcr.io/parkhyeonbeom/workcopilot-ai-router-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8083
           env:

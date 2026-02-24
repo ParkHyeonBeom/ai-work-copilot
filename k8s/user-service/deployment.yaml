@@ -17,13 +17,18 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: workcopilot/user-service:latest
-          imagePullPolicy: Never
+          image: ghcr.io/parkhyeonbeom/workcopilot-user-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8081
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: "local"
+              value: "k8s"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_SECRET
             - name: GOOGLE_CLIENT_ID
               valueFrom:
                 secretKeyRef:

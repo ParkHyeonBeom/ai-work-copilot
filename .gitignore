@@ -21,6 +21,9 @@ Thumbs.db
 .env
 *.env.local
 
+# K8s Secrets
+k8s/secrets.yaml
+
 # Logs
 *.log
 logs/
