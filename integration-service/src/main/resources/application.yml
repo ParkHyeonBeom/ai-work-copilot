@@ -7,11 +7,26 @@ spring:
   profiles:
     active: local
 
+jwt:
+  secret: ${JWT_SECRET:dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
+
+user-service:
+  url: ${USER_SERVICE_URL:http://localhost:8081}
+
+google:
+  api:
+    application-name: AI Work Copilot
+
 ---
 spring:
   config:
     activate:
       on-profile: local
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
   datasource:
     url: jdbc:h2:mem:integrationdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
@@ -28,12 +43,28 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:workcopilot_integration}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME:workcopilot}
+    password: ${DB_PASSWORD:}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
 
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-
-google:
-  api:
-    application-name: AI Work Copilot
