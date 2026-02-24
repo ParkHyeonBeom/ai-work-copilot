@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@Profile("local")
+@Profile({"local", "k8s"})
 public class InMemoryVectorStoreService implements VectorStoreService {
 
     private final Map<String, DocumentEntry> store = new ConcurrentHashMap<>();
