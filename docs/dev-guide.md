@@ -13,20 +13,20 @@
 | 3 | 데이터 인프라 (PostgreSQL, Redis, Kafka, Milvus) | ⏸️ 보류 |
 | 4 | Maven 멀티모듈 + 전체 POM + CLAUDE.md | ✅ 완료 |
 | 5 | Claude Code 스킬/에이전트/커맨드 세팅 | ✅ 완료 |
-| 6 | 워크플로우 테스트 | 🔜 |
-| 7 | common 모듈 보강 | 🔜 |
-| 8-9 | user-service (OAuth2, JWT, 온보딩) | |
-| 10 | integration-service: Google Calendar | |
-| 11 | integration-service: Gmail | |
-| 12 | integration-service: Google Drive + 전체 테스트 | |
-| 13-14 | ai-router-service (LLM 라우팅, RAG) | |
-| 15-16 | briefing-service (일일/회의 브리핑, SSE) | |
-| 17 | gateway | |
-| 18 | frontend (React 대시보드 + 온보딩 UI) | |
-| 19-20 | 프롬프트 튜닝, 캐싱, 비용 최적화 | |
-| 21 | 통합 테스트 | |
-| 22-23 | Docker, Helm, CI/CD, Grafana | |
-| 24-25 | README, API 문서, 데모 | |
+| 6 | 워크플로우 테스트 | ✅ 완료 |
+| 7 | common 모듈 보강 | ✅ 완료 |
+| 8-9 | user-service (OAuth2, JWT, 온보딩) | ✅ 완료 |
+| 10 | integration-service: Google Calendar | ✅ 완료 |
+| 11 | integration-service: Gmail | ✅ 완료 |
+| 12 | integration-service: Google Drive + 전체 테스트 | ✅ 완료 |
+| 13-14 | ai-router-service (LLM 라우팅, RAG) | ✅ 완료 |
+| 15-16 | briefing-service (일일/회의 브리핑, SSE) | ✅ 완료 |
+| 17 | gateway | ✅ 완료 |
+| 18 | frontend (React 대시보드 + 온보딩 UI) | ✅ 완료 |
+| 19-20 | 프롬프트 튜닝, 캐싱, 비용 최적화 | ⏸️ 프로덕션 환경에서 진행 |
+| 21 | 통합 테스트 | ✅ 완료 |
+| 22-23 | Docker, Helm, CI/CD, Grafana | ✅ 완료 (Dockerfile + K8s + CI) |
+| 24-25 | README, API 문서, 데모 | ✅ 완료 (README + Springdoc OpenAPI) |
 
 ---
 
