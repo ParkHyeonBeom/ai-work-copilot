@@ -9,24 +9,53 @@
 | Day | 작업 | 상태 |
 |-----|------|------|
 | 1 | MacBook 환경 검증 + IntelliJ + Claude Code | ✅ 완료 |
-| 2 | Windows 서버 (WSL2, K3s, Ollama) | ⏸️ K3s까지 완료, Ollama 보류 |
-| 3 | 데이터 인프라 (PostgreSQL, Redis, Kafka, Milvus) | ⏸️ 보류 |
+| 2 | Windows 서버 (WSL2, K3s, Ollama) | ⏸️ K3s까지 완료, Ollama K8s 배포 미완 |
+| 3 | 데이터 인프라 (PostgreSQL, Redis, Kafka, Milvus) | 🔶 Redis K8s 배포 완료, 나머지 미완 |
 | 4 | Maven 멀티모듈 + 전체 POM + CLAUDE.md | ✅ 완료 |
 | 5 | Claude Code 스킬/에이전트/커맨드 세팅 | ✅ 완료 |
 | 6 | 워크플로우 테스트 | ✅ 완료 |
 | 7 | common 모듈 보강 | ✅ 완료 |
 | 8-9 | user-service (OAuth2, JWT, 온보딩) | ✅ 완료 |
+| — | user-service: 관리자 승인 가입 + 이메일 인증 + Audit Logging | ✅ 완료 |
 | 10 | integration-service: Google Calendar | ✅ 완료 |
+| — | integration-service: 캘린더 일정 생성 + 팀 필터링 + 참석자 알림 | ✅ 완료 |
 | 11 | integration-service: Gmail | ✅ 완료 |
 | 12 | integration-service: Google Drive + 전체 테스트 | ✅ 완료 |
 | 13-14 | ai-router-service (LLM 라우팅, RAG) | ✅ 완료 |
 | 15-16 | briefing-service (일일/회의 브리핑, SSE) | ✅ 완료 |
 | 17 | gateway | ✅ 완료 |
 | 18 | frontend (React 대시보드 + 온보딩 UI) | ✅ 완료 |
+| — | frontend: 캘린더 페이지 + 관리자 페이지 + 알림 벨 | ✅ 완료 |
 | 19-20 | 프롬프트 튜닝, 캐싱, 비용 최적화 | ⏸️ 프로덕션 환경에서 진행 |
 | 21 | 통합 테스트 | ✅ 완료 |
-| 22-23 | Docker, Helm, CI/CD, Grafana | ✅ 완료 (Dockerfile + K8s + CI) |
+| 22-23 | Docker, Helm, CI/CD, Grafana | ✅ 완료 (Dockerfile + K8s + GitHub Actions CD + ArgoCD) |
 | 24-25 | README, API 문서, 데모 | ✅ 완료 (README + Springdoc OpenAPI) |
+| — | K8s 배포 안정화 (H2 PVC, Redis, Recreate 전략, 배포 체크리스트) | ✅ 완료 |
+
+### 현재 K8s 배포 현황
+
+| Pod | 상태 | 비고 |
+|-----|------|------|
+| gateway | ✅ Running | Spring Cloud Gateway, ngrok 연동 |
+| user-service | ✅ Running | H2 파일 (PVC) + Redis + Mail |
+| integration-service | ✅ Running | H2 파일 (PVC) |
+| ai-router-service | ✅ Running | Ollama 미연결 (K8s 배포 필요) |
+| briefing-service | ✅ Running | Ollama 미연결 |
+| frontend | ✅ Running | React + Vite |
+| redis | ✅ Running | 인증코드 저장용 |
+
+### 잔여 작업
+
+| 우선순위 | 작업 | 설명 |
+|----------|------|------|
+| 🔴 높음 | K8s PostgreSQL 전환 | H2 → PostgreSQL 마이그레이션, k8s 프로필 DB 변경, 무중단 배포(RollingUpdate) 전환 |
+| 🔴 높음 | Ollama K8s 배포 | Llama 3.1 8B + nomic-embed-text GPU Pod, ai-router/briefing 연동 |
+| 🟡 중간 | Kafka (KRaft) K8s 배포 | 비동기 이벤트 처리 (브리핑 요청 등) |
+| 🟡 중간 | Milvus K8s 배포 | RAG 벡터 검색용 |
+| 🟡 중간 | 프롬프트 튜닝 + 캐싱 | Ollama 연동 후 LLM 프롬프트 최적화, Redis 캐싱 |
+| 🟢 낮음 | Grafana + Prometheus | 모니터링 대시보드 |
+| 🟢 낮음 | Google OAuth 앱 인증 | "확인하지 않은 앱" 경고 제거 |
+| 🟣 예정 | 채팅 기능 | 사내 실시간 채팅 (WebSocket 기반) |
 
 ---
 
