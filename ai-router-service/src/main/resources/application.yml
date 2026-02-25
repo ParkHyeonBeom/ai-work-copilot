@@ -154,7 +154,7 @@ spring:
           model: gpt-4o
           temperature: 0.3
     ollama:
-      base-url: ${OLLAMA_BASE_URL:http://homeserver:11434}
+      base-url: ${OLLAMA_BASE_URL:http://100.95.227.98:11434}
       init:
         timeout: 120s
         pull-model-strategy: never
