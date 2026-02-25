@@ -28,6 +28,9 @@ public class SecurityConfig {
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final ClientRegistrationRepository clientRegistrationRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -58,8 +61,8 @@ public class SecurityConfig {
                                 response.setContentType("application/json");
                                 response.getWriter().write("{\"success\":false,\"message\":\"인증이 필요합니다.\",\"code\":\"UNAUTHORIZED\"}");
                             } else {
-                                // 비-API 요청은 OAuth 리다이렉트
-                                response.sendRedirect("/oauth2/authorize/google");
+                                // 비-API 요청은 절대 URL로 OAuth 리다이렉트 (Gateway 프록시 환경 대응)
+                                response.sendRedirect(frontendUrl + "/oauth2/authorize/google");
                             }
                         })
                 )

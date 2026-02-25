@@ -64,6 +64,9 @@ jwt:
   access-token-expiry: 3600000     # 1시간
   refresh-token-expiry: 604800000  # 7일
 
+app:
+  frontend-url: http://localhost:5173
+
 ---
 spring:
   config:

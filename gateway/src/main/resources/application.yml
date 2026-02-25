@@ -67,6 +67,9 @@ spring:
       on-profile: k8s
   cloud:
     gateway:
+      default-filters:
+        - PreserveHostHeader
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
       routes:
         - id: user-service
           uri: http://user-service:8081
