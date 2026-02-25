@@ -60,6 +60,7 @@ export default function DashboardPage() {
   const [loadingEmails, setLoadingEmails] = useState(true);
   const [loadingFiles, setLoadingFiles] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   /** 데이터 가져오기 */
   const fetchData = useCallback(async () => {
@@ -150,6 +151,19 @@ export default function DashboardPage() {
     }
   };
 
+  /** 브리핑 재생성 */
+  const handleRegenerateBriefing = async () => {
+    setIsRegenerating(true);
+    try {
+      const res = await briefings.regenerateDailyBriefing();
+      setTodayBriefing(res.data.data);
+    } catch (err) {
+      console.error('브리핑 재생성 실패:', err);
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
   const greeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return '좋은 아침이에요';
@@ -180,6 +194,8 @@ export default function DashboardPage() {
         isLoading={loadingBriefing}
         onGenerate={handleGenerateBriefing}
         isGenerating={isGenerating}
+        onRegenerate={handleRegenerateBriefing}
+        isRegenerating={isRegenerating}
       />
 
       {/* Main grid */}

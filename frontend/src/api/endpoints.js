@@ -47,6 +47,9 @@ export const briefings = {
   /** 일일 브리핑 생성 요청 */
   requestDailyBriefing: () => client.post('/briefings/daily'),
 
+  /** 일일 브리핑 재생성 요청 (기존 브리핑 삭제 후 새로 생성) */
+  regenerateDailyBriefing: () => client.post('/briefings/daily/regenerate'),
+
   /** 브리핑 상세 조회 */
   getBriefing: (id) => client.get(`/briefings/${id}`),
 
