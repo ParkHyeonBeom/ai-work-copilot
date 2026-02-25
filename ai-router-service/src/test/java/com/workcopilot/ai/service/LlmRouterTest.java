@@ -8,9 +8,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LlmRouterTest {
@@ -60,9 +63,10 @@ class LlmRouterTest {
     }
 
     @Test
-    @DisplayName("route_briefing타입_Claude비활성화시_OpenAI폴백")
-    void route_briefing타입_Claude비활성화시_OpenAI폴백() {
-        // given
+    @DisplayName("route_briefing타입_Claude비활성화시_OpenAI폴백_API키없으면_mock응답")
+    void route_briefing타입_Claude비활성화시_OpenAI폴백_API키없으면_mock응답() {
+        // given - OpenAI API 키가 없으면 401 에러 발생
+        when(openAiChatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("401 Unauthorized"));
         LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, ollamaRestClient, objectMapper, false, false);
 
         // when
@@ -75,9 +79,10 @@ class LlmRouterTest {
     }
 
     @Test
-    @DisplayName("route_summarize타입_Claude비활성화시_OpenAI폴백")
-    void route_summarize타입_Claude비활성화시_OpenAI폴백() {
-        // given
+    @DisplayName("route_summarize타입_Claude비활성화시_OpenAI폴백_API키없으면_mock응답")
+    void route_summarize타입_Claude비활성화시_OpenAI폴백_API키없으면_mock응답() {
+        // given - OpenAI API 키가 없으면 401 에러 발생
+        when(openAiChatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("401 Unauthorized"));
         LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, ollamaRestClient, objectMapper, false, false);
 
         // when
