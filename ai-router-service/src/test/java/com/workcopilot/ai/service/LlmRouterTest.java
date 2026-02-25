@@ -1,5 +1,6 @@
 package com.workcopilot.ai.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.workcopilot.ai.dto.AiResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,11 +24,16 @@ class LlmRouterTest {
     @Mock
     private ChatModel ollamaChatModel;
 
+    @Mock
+    private RestClient ollamaRestClient;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Test
     @DisplayName("route_classify타입_Ollama비활성화시_mock응답반환")
     void route_classify타입_Ollama비활성화시_mock응답반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, ollamaRestClient, objectMapper, false, false);
 
         // when
         AiResponse response = router.route("classify", "테스트 프롬프트");
@@ -41,7 +48,7 @@ class LlmRouterTest {
     @DisplayName("route_keyword타입_Ollama비활성화시_mock응답반환")
     void route_keyword타입_Ollama비활성화시_mock응답반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, ollamaRestClient, objectMapper, false, false);
 
         // when
         AiResponse response = router.route("keyword", "테스트 프롬프트");
@@ -56,7 +63,7 @@ class LlmRouterTest {
     @DisplayName("route_briefing타입_Claude비활성화시_OpenAI폴백")
     void route_briefing타입_Claude비활성화시_OpenAI폴백() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, ollamaRestClient, objectMapper, false, false);
 
         // when
         AiResponse response = router.route("briefing", "테스트 프롬프트");
@@ -71,7 +78,7 @@ class LlmRouterTest {
     @DisplayName("route_summarize타입_Claude비활성화시_OpenAI폴백")
     void route_summarize타입_Claude비활성화시_OpenAI폴백() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, ollamaRestClient, objectMapper, false, false);
 
         // when
         AiResponse response = router.route("summarize", "테스트 프롬프트");
@@ -86,7 +93,7 @@ class LlmRouterTest {
     @DisplayName("getModelForTask_classify_Ollama활성화시_올라마모델반환")
     void getModelForTask_classify_Ollama활성화시_올라마모델반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, true);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, ollamaRestClient, objectMapper, false, true);
 
         // when
         String model = router.getModelForTask("classify");
@@ -99,7 +106,7 @@ class LlmRouterTest {
     @DisplayName("getModelForTask_classify_모두비활성화시_GPT4o반환")
     void getModelForTask_classify_모두비활성화시_GPT4o반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, ollamaRestClient, objectMapper, false, false);
 
         // when
         String model = router.getModelForTask("classify");
@@ -112,7 +119,7 @@ class LlmRouterTest {
     @DisplayName("getModelForTask_briefing_Claude활성화시_Claude반환")
     void getModelForTask_briefing_Claude활성화시_Claude반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, true, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, ollamaRestClient, objectMapper, true, false);
 
         // when
         String model = router.getModelForTask("briefing");
@@ -125,7 +132,7 @@ class LlmRouterTest {
     @DisplayName("getModelForTask_briefing_Claude비활성화시_GPT4o반환")
     void getModelForTask_briefing_Claude비활성화시_GPT4o반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, ollamaRestClient, objectMapper, false, false);
 
         // when
         String model = router.getModelForTask("briefing");
@@ -138,7 +145,7 @@ class LlmRouterTest {
     @DisplayName("getModelForTask_summarize_Claude활성화시_Claude반환")
     void getModelForTask_summarize_Claude활성화시_Claude반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, true, true);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, ollamaRestClient, objectMapper, true, true);
 
         // when
         String model = router.getModelForTask("summarize");
