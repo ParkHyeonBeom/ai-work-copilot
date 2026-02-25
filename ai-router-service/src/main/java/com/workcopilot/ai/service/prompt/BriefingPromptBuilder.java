@@ -27,13 +27,15 @@ public class BriefingPromptBuilder {
             3. 실행 가능한 액션 아이템을 구체적으로 제시합니다.
             4. 간결하면서도 핵심을 놓치지 않는 브리핑을 작성합니다.
 
-            반드시 다음 JSON 형식으로 응답하세요:
+            [중요] 반드시 아래의 JSON 형식만 출력하세요. 다른 텍스트 없이 JSON만 출력합니다.
+            ```json
             {
-              "summary": "오늘 업무의 한 줄 요약",
-              "fullContent": "상세 브리핑 내용 (마크다운 형식)",
-              "keyPoints": ["핵심 포인트 1", "핵심 포인트 2", ...],
-              "actionItems": ["액션 아이템 1", "액션 아이템 2", ...]
+              "summary": "오늘 업무의 한 줄 요약 (50자 이내)",
+              "fullContent": "상세 브리핑 내용을 마크다운으로 작성",
+              "keyPoints": ["핵심 포인트 1", "핵심 포인트 2"],
+              "actionItems": ["액션 아이템 1", "액션 아이템 2"]
             }
+            ```
             """;
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
@@ -47,6 +49,11 @@ public class BriefingPromptBuilder {
         appendCalendarSection(sb, request.events());
         appendEmailSection(sb, request.emails());
         appendDriveSection(sb, request.files());
+
+        // JSON 출력 리마인더 (프롬프트 끝에 한 번 더 강조)
+        sb.append("\n---\n");
+        sb.append("[필수] 위 정보를 분석하여 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력합니다:\n");
+        sb.append("{\"summary\": \"...\", \"fullContent\": \"...\", \"keyPoints\": [...], \"actionItems\": [...]}\n");
 
         String prompt = sb.toString();
         log.debug("브리핑 프롬프트 생성 완료: events={}, emails={}, files={}",

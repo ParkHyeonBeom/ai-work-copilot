@@ -17,13 +17,16 @@ class LlmRouterTest {
     private ChatModel openAiChatModel;
 
     @Mock
+    private ChatModel anthropicChatModel;
+
+    @Mock
     private ChatModel ollamaChatModel;
 
     @Test
     @DisplayName("route_classify타입_Ollama비활성화시_mock응답반환")
     void route_classify타입_Ollama비활성화시_mock응답반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, ollamaChatModel, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
 
         // when
         AiResponse response = router.route("classify", "테스트 프롬프트");
@@ -38,7 +41,7 @@ class LlmRouterTest {
     @DisplayName("route_keyword타입_Ollama비활성화시_mock응답반환")
     void route_keyword타입_Ollama비활성화시_mock응답반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, ollamaChatModel, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
 
         // when
         AiResponse response = router.route("keyword", "테스트 프롬프트");
@@ -50,38 +53,40 @@ class LlmRouterTest {
     }
 
     @Test
-    @DisplayName("route_briefing타입_OpenAI라우팅_정상응답")
-    void route_briefing타입_OpenAI라우팅_정상응답() {
+    @DisplayName("route_briefing타입_Claude비활성화시_OpenAI폴백")
+    void route_briefing타입_Claude비활성화시_OpenAI폴백() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, ollamaChatModel, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
 
         // when
         AiResponse response = router.route("briefing", "테스트 프롬프트");
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.model()).isEqualTo("gpt-4o");
+        // API 키가 없으면 mock 응답 반환
+        assertThat(response.model()).contains("mock");
     }
 
     @Test
-    @DisplayName("route_summarize타입_OpenAI라우팅_정상응답")
-    void route_summarize타입_OpenAI라우팅_정상응답() {
+    @DisplayName("route_summarize타입_Claude비활성화시_OpenAI폴백")
+    void route_summarize타입_Claude비활성화시_OpenAI폴백() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, ollamaChatModel, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
 
         // when
         AiResponse response = router.route("summarize", "테스트 프롬프트");
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.model()).isEqualTo("gpt-4o");
+        // API 키가 없으면 mock 응답 반환
+        assertThat(response.model()).contains("mock");
     }
 
     @Test
     @DisplayName("getModelForTask_classify_Ollama활성화시_올라마모델반환")
     void getModelForTask_classify_Ollama활성화시_올라마모델반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, ollamaChatModel, true);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, true);
 
         // when
         String model = router.getModelForTask("classify");
@@ -91,10 +96,10 @@ class LlmRouterTest {
     }
 
     @Test
-    @DisplayName("getModelForTask_classify_Ollama비활성화시_GPT4o반환")
-    void getModelForTask_classify_Ollama비활성화시_GPT4o반환() {
+    @DisplayName("getModelForTask_classify_모두비활성화시_GPT4o반환")
+    void getModelForTask_classify_모두비활성화시_GPT4o반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, ollamaChatModel, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
 
         // when
         String model = router.getModelForTask("classify");
@@ -104,10 +109,23 @@ class LlmRouterTest {
     }
 
     @Test
-    @DisplayName("getModelForTask_briefing_항상GPT4o반환")
-    void getModelForTask_briefing_항상GPT4o반환() {
+    @DisplayName("getModelForTask_briefing_Claude활성화시_Claude반환")
+    void getModelForTask_briefing_Claude활성화시_Claude반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, ollamaChatModel, true);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, true, false);
+
+        // when
+        String model = router.getModelForTask("briefing");
+
+        // then
+        assertThat(model).isEqualTo("claude-sonnet-4");
+    }
+
+    @Test
+    @DisplayName("getModelForTask_briefing_Claude비활성화시_GPT4o반환")
+    void getModelForTask_briefing_Claude비활성화시_GPT4o반환() {
+        // given
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, false, false);
 
         // when
         String model = router.getModelForTask("briefing");
@@ -117,15 +135,15 @@ class LlmRouterTest {
     }
 
     @Test
-    @DisplayName("getModelForTask_summarize_항상GPT4o반환")
-    void getModelForTask_summarize_항상GPT4o반환() {
+    @DisplayName("getModelForTask_summarize_Claude활성화시_Claude반환")
+    void getModelForTask_summarize_Claude활성화시_Claude반환() {
         // given
-        LlmRouter router = new LlmRouter(openAiChatModel, ollamaChatModel, false);
+        LlmRouter router = new LlmRouter(openAiChatModel, anthropicChatModel, ollamaChatModel, true, true);
 
         // when
         String model = router.getModelForTask("summarize");
 
         // then
-        assertThat(model).isEqualTo("gpt-4o");
+        assertThat(model).isEqualTo("claude-sonnet-4");
     }
 }

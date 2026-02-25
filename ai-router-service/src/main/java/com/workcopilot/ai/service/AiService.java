@@ -81,11 +81,14 @@ public class AiService {
 
     /**
      * LLM 응답을 BriefingResponse로 파싱한다.
-     * JSON 파싱에 실패하면 원문을 그대로 fullContent로 사용한다.
+     * JSON 파싱에 실패하면 JSON 추출을 시도하고, 그래도 실패하면 원문을 fullContent로 사용한다.
      */
     private BriefingResponse parseBriefingResponse(String llmResult) {
+        // 먼저 JSON 추출 시도
+        String jsonContent = extractJson(llmResult);
+
         try {
-            Map<String, Object> resultMap = objectMapper.readValue(llmResult, new TypeReference<>() {});
+            Map<String, Object> resultMap = objectMapper.readValue(jsonContent, new TypeReference<>() {});
 
             String summary = (String) resultMap.getOrDefault("summary", "브리핑 요약을 생성할 수 없습니다.");
             String fullContent = (String) resultMap.getOrDefault("fullContent", llmResult);
@@ -103,12 +106,65 @@ public class AiService {
             return new BriefingResponse(summary, fullContent, keyPoints, actionItems);
         } catch (JsonProcessingException e) {
             log.warn("LLM 응답 JSON 파싱 실패, 원문을 fullContent로 사용: {}", e.getMessage());
+
+            // 원문이 비어있거나 너무 짧으면 기본 메시지 사용
+            String content = (llmResult != null && llmResult.trim().length() > 10)
+                    ? llmResult.trim()
+                    : "브리핑 생성 중 응답을 받지 못했습니다.";
+
             return new BriefingResponse(
                     "브리핑이 생성되었습니다.",
-                    llmResult,
+                    content,
                     List.of(),
                     List.of()
             );
         }
+    }
+
+    /**
+     * LLM 응답에서 JSON 부분을 추출한다.
+     * ```json ... ``` 블록이나 { } 블록을 찾아서 반환한다.
+     */
+    private String extractJson(String text) {
+        if (text == null || text.isBlank()) {
+            return "{}";
+        }
+
+        String trimmed = text.trim();
+
+        // 이미 순수 JSON이면 그대로 반환
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            return trimmed;
+        }
+
+        // ```json ... ``` 블록 추출
+        int jsonBlockStart = trimmed.indexOf("```json");
+        if (jsonBlockStart >= 0) {
+            int jsonStart = trimmed.indexOf("{", jsonBlockStart);
+            int jsonEnd = trimmed.lastIndexOf("}");
+            if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                return trimmed.substring(jsonStart, jsonEnd + 1);
+            }
+        }
+
+        // ``` ... ``` 블록 추출 (json 키워드 없이)
+        int codeBlockStart = trimmed.indexOf("```");
+        if (codeBlockStart >= 0) {
+            int jsonStart = trimmed.indexOf("{", codeBlockStart);
+            int jsonEnd = trimmed.lastIndexOf("}");
+            if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                return trimmed.substring(jsonStart, jsonEnd + 1);
+            }
+        }
+
+        // 일반 JSON 객체 추출 시도
+        int firstBrace = trimmed.indexOf("{");
+        int lastBrace = trimmed.lastIndexOf("}");
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+            return trimmed.substring(firstBrace, lastBrace + 1);
+        }
+
+        // JSON을 찾지 못하면 원본 반환
+        return trimmed;
     }
 }

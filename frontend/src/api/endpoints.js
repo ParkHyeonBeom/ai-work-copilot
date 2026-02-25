@@ -18,28 +18,28 @@ export const users = {
 // ─── Calendar ──────────────────────────────────────────
 export const calendar = {
   /** 오늘의 일정 조회 */
-  getTodayEvents: () => client.get('/calendar/events/today'),
+  getTodayEvents: () => client.get('/integrations/calendar/events/today'),
 
   /** 향후 N일간의 일정 조회 */
   getUpcomingEvents: (days = 7) =>
-    client.get('/calendar/events/upcoming', { params: { days } }),
+    client.get('/integrations/calendar/events', { params: { days } }),
 };
 
 // ─── Gmail ─────────────────────────────────────────────
 export const gmail = {
   /** 최근 이메일 조회 */
   getRecentEmails: (max = 20) =>
-    client.get('/gmail/messages/recent', { params: { max } }),
+    client.get('/integrations/gmail/messages/recent', { params: { max } }),
 
   /** 중요 이메일 조회 */
-  getImportantEmails: () => client.get('/gmail/messages/important'),
+  getImportantEmails: () => client.get('/integrations/gmail/messages/important'),
 };
 
 // ─── Drive ─────────────────────────────────────────────
 export const drive = {
   /** 최근 파일 조회 */
   getRecentFiles: (max = 20) =>
-    client.get('/drive/files/recent', { params: { max } }),
+    client.get('/integrations/drive/files/recent', { params: { max } }),
 };
 
 // ─── Briefings ─────────────────────────────────────────

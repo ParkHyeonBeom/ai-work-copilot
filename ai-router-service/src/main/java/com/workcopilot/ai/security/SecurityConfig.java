@@ -37,6 +37,7 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/h2-console/**",
                                 "/api/internal/**",
+                                "/api/ai/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"

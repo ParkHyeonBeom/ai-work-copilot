@@ -35,6 +35,10 @@ spec:
                   name: openai-secret
                   key: OPENAI_API_KEY
                   optional: true
+            - name: OLLAMA_ENABLED
+              value: "true"
+            - name: OLLAMA_BASE_URL
+              value: "http://host.docker.internal:11434"
           resources:
             requests:
               memory: "256Mi"

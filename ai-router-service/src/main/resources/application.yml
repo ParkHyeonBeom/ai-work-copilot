@@ -50,18 +50,34 @@ spring:
         options:
           model: gpt-4o
           temperature: 0.3
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:}
+      chat:
+        options:
+          model: claude-sonnet-4-20250514
+          temperature: 0.3
     ollama:
-      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      base-url: ${OLLAMA_BASE_URL:http://100.95.227.98:11434}
+      init:
+        timeout: 120s
+        pull-model-strategy: never
+      connection:
+        timeout: 30s
+      request:
+        timeout: 180s
       chat:
         options:
           model: llama3.1:8b-instruct-q4_K_M
+          num-predict: 2048
       embedding:
         options:
           model: nomic-embed-text
 
 ai:
+  anthropic:
+    enabled: ${ANTHROPIC_ENABLED:false}
   ollama:
-    enabled: ${OLLAMA_ENABLED:false}
+    enabled: ${OLLAMA_ENABLED:true}
 
 milvus:
   host: ${MILVUS_HOST:localhost}
@@ -139,13 +155,21 @@ spring:
           temperature: 0.3
     ollama:
       base-url: ${OLLAMA_BASE_URL:http://homeserver:11434}
+      init:
+        timeout: 120s
+        pull-model-strategy: never
+      connection:
+        timeout: 30s
+      request:
+        timeout: 180s
       chat:
         options:
           model: llama3.1:8b-instruct-q4_K_M
+          num-predict: 2048
 
 integration-service:
   url: http://integration-service:8082
 
 ai:
   ollama:
-    enabled: ${OLLAMA_ENABLED:false}
+    enabled: ${OLLAMA_ENABLED:true}

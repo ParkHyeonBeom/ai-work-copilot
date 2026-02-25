@@ -199,7 +199,7 @@ export default function BriefingPage() {
 
   const displayContent = isStreaming
     ? streamContent
-    : briefing?.content || '';
+    : briefing?.fullContent || '';
 
   return (
     <div className="max-w-7xl mx-auto">
