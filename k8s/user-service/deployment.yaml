@@ -39,6 +39,21 @@ spec:
                 secretKeyRef:
                   name: google-oauth
                   key: GOOGLE_CLIENT_SECRET
+            - name: ADMIN_EMAIL
+              value: "gusqja0213@gmail.com"
+            - name: MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mail-secret
+                  key: MAIL_USERNAME
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mail-secret
+                  key: MAIL_PASSWORD
+          volumeMounts:
+            - name: h2-data
+              mountPath: /data
           resources:
             requests:
               memory: "256Mi"
@@ -56,3 +71,7 @@ spec:
               port: 8081
             initialDelaySeconds: 60
             periodSeconds: 30
+      volumes:
+        - name: h2-data
+          persistentVolumeClaim:
+            claimName: user-service-data

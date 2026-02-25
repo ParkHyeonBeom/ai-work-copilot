@@ -9,6 +9,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [message, setMessage] = useState(null);
+  const [expandedUser, setExpandedUser] = useState(null);
+  const [profileForm, setProfileForm] = useState({ position: '', department: '', internalPhone: '' });
 
   // ADMIN이 아니면 대시보드로 리다이렉트
   if (user && user.role !== 'ADMIN') {
@@ -30,13 +32,29 @@ export default function AdminPage() {
     }
   };
 
+  const handleExpandApprove = (userId) => {
+    if (expandedUser === userId) {
+      setExpandedUser(null);
+      setProfileForm({ position: '', department: '', internalPhone: '' });
+    } else {
+      setExpandedUser(userId);
+      setProfileForm({ position: '', department: '', internalPhone: '' });
+    }
+  };
+
   const handleApprove = async (userId, userName) => {
+    if (!profileForm.position || !profileForm.department) {
+      setMessage({ type: 'error', text: '직급과 부서는 필수 입력입니다.' });
+      return;
+    }
     setActionLoading(userId);
     setMessage(null);
     try {
-      await admin.approveUser(userId);
+      await admin.approveUser(userId, profileForm);
       setMessage({ type: 'success', text: `${userName} 승인 완료. 인증 이메일이 발송되었습니다.` });
       setPendingUsers((prev) => prev.filter((u) => u.id !== userId));
+      setExpandedUser(null);
+      setProfileForm({ position: '', department: '', internalPhone: '' });
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || '승인 처리에 실패했습니다.' });
     } finally {
@@ -99,44 +117,107 @@ export default function AdminPage() {
           {pendingUsers.map((u) => (
             <div
               key={u.id}
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800"
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
             >
-              <div className="flex items-center gap-3">
-                {u.profileImageUrl ? (
-                  <img
-                    src={u.profileImageUrl}
-                    alt={u.name}
-                    className="w-10 h-10 rounded-full"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      {u.name?.charAt(0) || '?'}
-                    </span>
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  {u.profileImageUrl ? (
+                    <img
+                      src={u.profileImageUrl}
+                      alt={u.name}
+                      className="w-10 h-10 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        {u.name?.charAt(0) || '?'}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{u.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
                   </div>
-                )}
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{u.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleExpandApprove(u.id)}
+                    disabled={actionLoading === u.id}
+                    className="px-3 py-1.5 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-xs font-medium rounded-lg transition-colors"
+                  >
+                    {expandedUser === u.id ? '취소' : '승인'}
+                  </button>
+                  <button
+                    onClick={() => handleReject(u.id, u.name)}
+                    disabled={actionLoading === u.id}
+                    className="px-3 py-1.5 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-xs font-medium rounded-lg transition-colors"
+                  >
+                    거부
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleApprove(u.id, u.name)}
-                  disabled={actionLoading === u.id}
-                  className="px-3 py-1.5 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-xs font-medium rounded-lg transition-colors"
-                >
-                  {actionLoading === u.id ? '...' : '승인'}
-                </button>
-                <button
-                  onClick={() => handleReject(u.id, u.name)}
-                  disabled={actionLoading === u.id}
-                  className="px-3 py-1.5 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-xs font-medium rounded-lg transition-colors"
-                >
-                  거부
-                </button>
-              </div>
+              {/* 프로필 입력 폼 (인라인 확장) */}
+              {expandedUser === u.id && (
+                <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-800">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-3 mb-3">
+                    프로필 설정 (승인 시 필수)
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">직급 *</label>
+                      <select
+                        value={profileForm.position}
+                        onChange={(e) => setProfileForm({ ...profileForm, position: e.target.value })}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      >
+                        <option value="">선택</option>
+                        <option value="사원">사원</option>
+                        <option value="대리">대리</option>
+                        <option value="과장">과장</option>
+                        <option value="차장">차장</option>
+                        <option value="부장">부장</option>
+                        <option value="이사">이사</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">부서 *</label>
+                      <select
+                        value={profileForm.department}
+                        onChange={(e) => setProfileForm({ ...profileForm, department: e.target.value })}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      >
+                        <option value="">선택</option>
+                        <option value="개발팀">개발팀</option>
+                        <option value="기획팀">기획팀</option>
+                        <option value="디자인팀">디자인팀</option>
+                        <option value="마케팅팀">마케팅팀</option>
+                        <option value="영업팀">영업팀</option>
+                        <option value="인사팀">인사팀</option>
+                        <option value="재무팀">재무팀</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">사내번호</label>
+                      <input
+                        type="text"
+                        placeholder="예: 1234"
+                        value={profileForm.internalPhone}
+                        onChange={(e) => setProfileForm({ ...profileForm, internalPhone: e.target.value })}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleApprove(u.id, u.name)}
+                    disabled={actionLoading === u.id || !profileForm.position || !profileForm.department}
+                    className="mt-3 w-full px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    {actionLoading === u.id ? '처리 중...' : '승인 확정'}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

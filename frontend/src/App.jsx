@@ -10,6 +10,7 @@ import PendingApprovalPage from './pages/PendingApprovalPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import RejectedPage from './pages/RejectedPage';
 import AdminPage from './pages/AdminPage';
+import CalendarPage from './pages/CalendarPage';
 
 /**
  * 인증이 필요한 라우트를 보호하는 컴포넌트
@@ -83,6 +84,7 @@ export default function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/briefing/:id" element={<BriefingPage />} />
         <Route path="/briefings" element={<BriefingPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/admin" element={<AdminPage />} />
       </Route>
 

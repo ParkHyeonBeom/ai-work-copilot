@@ -9,7 +9,10 @@ import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.workcopilot.common.exception.BusinessException;
 import com.workcopilot.common.exception.ErrorCode;
+import com.workcopilot.integration.client.UserInfoClient;
+import com.workcopilot.integration.client.UserNotificationClient;
 import com.workcopilot.integration.google.GoogleCredentialProvider;
+import com.workcopilot.integration.repository.CalendarEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,15 @@ class CalendarServiceTest {
     @Mock
     private GoogleCredentialProvider credentialProvider;
 
+    @Mock
+    private UserNotificationClient userNotificationClient;
+
+    @Mock
+    private CalendarEventRepository calendarEventRepository;
+
+    @Mock
+    private UserInfoClient userInfoClient;
+
     private CalendarService calendarService;
 
     private static final Long USER_ID = 1L;
@@ -42,7 +54,7 @@ class CalendarServiceTest {
                 .setLowLevelHttpResponse(mockResponse)
                 .build();
         JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-        calendarService = new CalendarService(credentialProvider, transport, jsonFactory, "AI Work Copilot Test");
+        calendarService = new CalendarService(credentialProvider, transport, jsonFactory, "AI Work Copilot Test", userNotificationClient, calendarEventRepository, userInfoClient);
     }
 
     @Test

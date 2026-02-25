@@ -24,6 +24,9 @@ Thumbs.db
 # K8s Secrets
 k8s/secrets.yaml
 
+# H2 Database files
+**/data/
+
 # Logs
 *.log
 logs/

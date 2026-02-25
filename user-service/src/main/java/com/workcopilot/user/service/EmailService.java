@@ -43,4 +43,23 @@ public class EmailService {
             log.warn("이메일 발송 실패 (로그로 대체): to={}, code={}, error={}", to, code, e.getMessage());
         }
     }
+
+    public void sendMeetingNotification(String to, String subject, String body) {
+        if (mailSender == null) {
+            log.info("[로컬 모드] 회의 알림 이메일 대체 - to={}, subject={}", to, subject);
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject("[AI Work Copilot] " + subject);
+            message.setText(body);
+
+            mailSender.send(message);
+            log.info("회의 알림 이메일 발송 완료: to={}", to);
+        } catch (Exception e) {
+            log.warn("회의 알림 이메일 발송 실패: to={}, error={}", to, e.getMessage());
+        }
+    }
 }

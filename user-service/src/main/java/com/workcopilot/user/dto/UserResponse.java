@@ -16,6 +16,9 @@ public record UserResponse(
         UserStatus status,
         boolean onboardingCompleted,
         UserSettings settings,
+        String position,
+        String department,
+        String internalPhone,
         LocalDateTime createdAt
 ) {
     public static UserResponse from(User user) {
@@ -28,6 +31,9 @@ public record UserResponse(
                 user.getStatus(),
                 user.isOnboardingCompleted(),
                 user.getSettings(),
+                user.getPosition(),
+                user.getDepartment(),
+                user.getInternalPhone(),
                 user.getCreatedAt()
         );
     }

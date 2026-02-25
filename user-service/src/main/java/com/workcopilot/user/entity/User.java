@@ -45,6 +45,12 @@ public class User extends BaseEntity {
 
     private Instant googleTokenExpiresAt;
 
+    private String position;
+
+    private String department;
+
+    private String internalPhone;
+
     @Convert(converter = UserSettingsConverter.class)
     @Column(columnDefinition = "TEXT")
     @Builder.Default
@@ -69,6 +75,12 @@ public class User extends BaseEntity {
     public void updateProfile(String name, String profileImageUrl) {
         this.name = name;
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void applyAdminProfile(String position, String department, String internalPhone) {
+        this.position = position;
+        this.department = department;
+        this.internalPhone = internalPhone;
     }
 
     public void approve() {

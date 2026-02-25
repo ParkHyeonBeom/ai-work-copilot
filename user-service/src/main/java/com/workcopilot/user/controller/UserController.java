@@ -3,12 +3,15 @@ package com.workcopilot.user.controller;
 import com.workcopilot.common.dto.ApiResponse;
 import com.workcopilot.user.dto.OnboardingRequest;
 import com.workcopilot.user.dto.UpdateSettingsRequest;
+import com.workcopilot.user.dto.UserInfoDto;
 import com.workcopilot.user.dto.UserResponse;
 import com.workcopilot.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -35,5 +38,10 @@ public class UserController {
                                                          @Valid @RequestBody OnboardingRequest request) {
         Long userId = (Long) authentication.getPrincipal();
         return ApiResponse.ok(userService.completeOnboarding(userId, request));
+    }
+
+    @GetMapping("/search")
+    public ApiResponse<List<UserInfoDto>> searchUsers(@RequestParam(value = "q", required = false) String query) {
+        return ApiResponse.ok(userService.searchUsers(query));
     }
 }

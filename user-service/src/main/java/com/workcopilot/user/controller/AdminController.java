@@ -5,9 +5,11 @@ import com.workcopilot.common.audit.Audited;
 import com.workcopilot.common.exception.BusinessException;
 import com.workcopilot.common.exception.ErrorCode;
 import com.workcopilot.common.dto.ApiResponse;
+import com.workcopilot.user.dto.ApproveRequest;
 import com.workcopilot.user.dto.UserResponse;
 import com.workcopilot.user.entity.User;
 import com.workcopilot.user.entity.UserStatus;
+import jakarta.validation.Valid;
 import com.workcopilot.user.repository.UserRepository;
 import com.workcopilot.user.service.EmailService;
 import com.workcopilot.user.service.VerificationService;
@@ -41,17 +43,20 @@ public class AdminController {
 
     @PostMapping("/{id}/approve")
     @Audited(action = AuditAction.USER_APPROVED)
-    public ApiResponse<UserResponse> approveUser(@PathVariable Long id) {
+    public ApiResponse<UserResponse> approveUser(
+            @PathVariable Long id,
+            @Valid @RequestBody ApproveRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        user.applyAdminProfile(request.position(), request.department(), request.internalPhone());
         user.approve();
         userRepository.save(user);
 
         String code = verificationService.generateCode(user.getEmail());
         emailService.sendVerificationEmail(user.getEmail(), code);
 
-        log.info("사용자 승인 완료: userId={}, email={}", id, user.getEmail());
+        log.info("사용자 승인 완료: userId={}, email={}, department={}", id, user.getEmail(), request.department());
         return ApiResponse.ok(UserResponse.from(user));
     }
 

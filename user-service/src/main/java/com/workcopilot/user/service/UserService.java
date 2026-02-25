@@ -7,14 +7,18 @@ import com.workcopilot.common.exception.ErrorCode;
 import com.workcopilot.user.dto.GoogleTokenResponse;
 import com.workcopilot.user.dto.OnboardingRequest;
 import com.workcopilot.user.dto.UpdateSettingsRequest;
+import com.workcopilot.user.dto.UserInfoDto;
 import com.workcopilot.user.dto.UserResponse;
 import com.workcopilot.user.entity.User;
 import com.workcopilot.user.entity.UserSettings;
+import com.workcopilot.user.entity.UserStatus;
 import com.workcopilot.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -74,6 +78,15 @@ public class UserService {
 
         log.info("온보딩 완료: userId={}", userId);
         return UserResponse.from(user);
+    }
+
+    public List<UserInfoDto> searchUsers(String query) {
+        List<User> users = (query == null || query.isBlank())
+                ? userRepository.findByStatusOrderByCreatedAtAsc(UserStatus.ACTIVE)
+                : userRepository.findByNameContainingIgnoreCaseAndStatus(query, UserStatus.ACTIVE);
+        return users.stream()
+                .map(UserInfoDto::from)
+                .toList();
     }
 
     public GoogleTokenResponse getGoogleToken(Long userId) {

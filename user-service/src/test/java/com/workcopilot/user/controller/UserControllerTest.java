@@ -76,6 +76,7 @@ class UserControllerTest {
                 1L, "test@example.com", "테스트", null,
                 Role.USER, com.workcopilot.user.entity.UserStatus.ACTIVE,
                 false, UserSettings.defaults(),
+                "선임연구원", "개발팀", null,
                 LocalDateTime.now()
         );
     }

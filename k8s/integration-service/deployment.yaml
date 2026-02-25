@@ -39,6 +39,9 @@ spec:
                 secretKeyRef:
                   name: google-oauth
                   key: GOOGLE_CLIENT_SECRET
+          volumeMounts:
+            - name: h2-data
+              mountPath: /data
           resources:
             requests:
               memory: "256Mi"
@@ -56,3 +59,7 @@ spec:
               port: 8082
             initialDelaySeconds: 60
             periodSeconds: 30
+      volumes:
+        - name: h2-data
+          persistentVolumeClaim:
+            claimName: integration-service-data

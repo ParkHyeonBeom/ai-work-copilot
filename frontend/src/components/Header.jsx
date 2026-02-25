@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import NotificationBell from './NotificationBell';
 
 export default function Header({ onMenuClick }) {
   const { user, logout } = useAuth();
@@ -46,7 +47,10 @@ export default function Header({ onMenuClick }) {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          {/* Dark mode toggle placeholder */}
+          {/* Notification bell */}
+          <NotificationBell />
+
+          {/* Dark mode toggle */}
           <button
             onClick={() => {
               document.documentElement.classList.toggle('dark');

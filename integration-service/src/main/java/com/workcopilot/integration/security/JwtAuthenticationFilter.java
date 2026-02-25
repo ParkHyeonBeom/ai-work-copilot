@@ -34,15 +34,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && jwtProvider.validateToken(token)) {
             Long userId = jwtProvider.getUserIdFromToken(token);
             String email = jwtProvider.getEmailFromToken(token);
+            String role = jwtProvider.getRoleFromToken(token);
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             userId, null,
-                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                            List.of(new SimpleGrantedAuthority("ROLE_" + role))
                     );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            log.debug("JWT 인증 성공: userId={}, email={}", userId, email);
+            log.debug("JWT 인증 성공: userId={}, email={}, role={}", userId, email, role);
         }
 
         filterChain.doFilter(request, response);

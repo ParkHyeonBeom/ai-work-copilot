@@ -8,8 +8,10 @@ resources:
 - gateway/ingress.yaml
 - user-service/deployment.yaml
 - user-service/service.yaml
+- user-service/pvc.yaml
 - integration-service/deployment.yaml
 - integration-service/service.yaml
+- integration-service/pvc.yaml
 - ai-router-service/deployment.yaml
 - ai-router-service/service.yaml
 - briefing-service/deployment.yaml

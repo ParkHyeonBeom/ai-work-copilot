@@ -10,8 +10,28 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': {
+      '/api/users': {
         target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
+      '/api/auth': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
+      '/api/admin': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
+      '/api/integrations': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+      },
+      '/api/ai': {
+        target: 'http://localhost:8083',
+        changeOrigin: true,
+      },
+      '/api/briefings': {
+        target: 'http://localhost:8084',
         changeOrigin: true,
       },
       '/oauth2': {
