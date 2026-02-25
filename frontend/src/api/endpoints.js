@@ -3,7 +3,7 @@ import client from './client';
 // ─── Auth ──────────────────────────────────────────────
 export const auth = {
   /** 현재 로그인한 사용자 정보 조회 */
-  getMe: () => client.get('/auth/me'),
+  getMe: () => client.get('/users/me'),
 };
 
 // ─── Users ─────────────────────────────────────────────
