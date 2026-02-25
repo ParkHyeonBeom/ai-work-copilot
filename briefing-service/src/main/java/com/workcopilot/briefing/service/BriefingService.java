@@ -111,4 +111,73 @@ public class BriefingService {
         return briefingRepository.findByUserIdAndBriefingDate(userId, LocalDate.now())
                 .map(BriefingResponse::from);
     }
+
+    /**
+     * 오늘의 브리핑을 강제로 재생성한다.
+     * 기존 브리핑이 있으면 삭제하고 새로 생성한다.
+     */
+    @Transactional
+    public BriefingResponse regenerateDailyBriefing(Long userId) {
+        log.info("일일 브리핑 재생성 시작: userId={}", userId);
+
+        LocalDate today = LocalDate.now();
+
+        // 기존 브리핑 삭제
+        briefingRepository.findByUserIdAndBriefingDate(userId, today)
+                .ifPresent(existing -> {
+                    log.info("기존 브리핑 삭제: briefingId={}", existing.getId());
+                    briefingRepository.delete(existing);
+                });
+
+        // 새 브리핑 생성
+        return generateDailyBriefingInternal(userId, today);
+    }
+
+    /**
+     * 브리핑 생성 내부 로직 (재사용)
+     */
+    private BriefingResponse generateDailyBriefingInternal(Long userId, LocalDate date) {
+        Briefing briefing = briefingRepository.save(
+                Briefing.builder()
+                        .userId(userId)
+                        .briefingDate(date)
+                        .status(BriefingStatus.PENDING)
+                        .build()
+        );
+
+        try {
+            briefing.updateStatus(BriefingStatus.GENERATING);
+            briefingRepository.save(briefing);
+
+            WorkDataDto workData = integrationClient.collectWorkData();
+
+            BriefingRequest aiRequest = new BriefingRequest(
+                    userId,
+                    workData.events(),
+                    workData.emails(),
+                    workData.files()
+            );
+            BriefingAiResponse aiResponse = aiRouterClient.generateBriefing(aiRequest);
+
+            briefing.complete(
+                    aiResponse.summary(),
+                    aiResponse.fullContent(),
+                    aiResponse.keyPoints(),
+                    aiResponse.actionItems(),
+                    workData.events() != null ? workData.events().size() : 0,
+                    workData.emails() != null ? workData.emails().size() : 0,
+                    workData.files() != null ? workData.files().size() : 0
+            );
+            briefingRepository.save(briefing);
+
+            log.info("일일 브리핑 재생성 완료: userId={}, briefingId={}", userId, briefing.getId());
+            return BriefingResponse.from(briefing);
+
+        } catch (Exception e) {
+            log.error("일일 브리핑 재생성 실패: userId={}, error={}", userId, e.getMessage(), e);
+            briefing.fail("브리핑 생성 중 오류가 발생했습니다: " + e.getMessage());
+            briefingRepository.save(briefing);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "브리핑 생성 실패: " + e.getMessage());
+        }
+    }
 }

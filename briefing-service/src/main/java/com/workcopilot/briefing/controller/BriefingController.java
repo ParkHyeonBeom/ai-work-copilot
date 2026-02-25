@@ -32,6 +32,15 @@ public class BriefingController {
         return ApiResponse.ok(response);
     }
 
+    @PostMapping("/daily/regenerate")
+    public ApiResponse<BriefingResponse> regenerateDailyBriefing(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        log.info("일일 브리핑 재생성 요청: userId={}", userId);
+
+        BriefingResponse response = briefingService.regenerateDailyBriefing(userId);
+        return ApiResponse.ok(response);
+    }
+
     @GetMapping("/{id}")
     public ApiResponse<BriefingResponse> getBriefing(@PathVariable Long id,
                                                       Authentication authentication) {
