@@ -16,7 +16,7 @@ public class DriveController {
 
     private final DriveService driveService;
 
-    @GetMapping("/files")
+    @GetMapping({"/files", "/files/recent"})
     public ApiResponse<List<DriveFileDto>> getRecentFiles(
             Authentication authentication,
             @RequestParam(defaultValue = "20") int max) {
