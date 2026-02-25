@@ -51,6 +51,8 @@ spec:
                 secretKeyRef:
                   name: mail-secret
                   key: MAIL_PASSWORD
+            - name: REDIS_HOST
+              value: "redis"
           volumeMounts:
             - name: h2-data
               mountPath: /data

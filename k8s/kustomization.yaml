@@ -16,6 +16,8 @@ resources:
 - ai-router-service/service.yaml
 - briefing-service/deployment.yaml
 - briefing-service/service.yaml
+- redis/deployment.yaml
+- redis/service.yaml
 - frontend/deployment.yaml
 - frontend/service.yaml
 
