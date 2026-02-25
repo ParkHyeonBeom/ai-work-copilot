@@ -50,6 +50,19 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            // API 요청에 대해서는 401 반환 (OAuth 리다이렉트 대신)
+                            if (request.getRequestURI().startsWith("/api/")) {
+                                response.setStatus(401);
+                                response.setContentType("application/json");
+                                response.getWriter().write("{\"success\":false,\"message\":\"인증이 필요합니다.\",\"code\":\"UNAUTHORIZED\"}");
+                            } else {
+                                // 비-API 요청은 OAuth 리다이렉트
+                                response.sendRedirect("/oauth2/authorize/google");
+                            }
+                        })
+                )
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(endpoint -> endpoint
                                 .baseUri("/oauth2/authorize")
