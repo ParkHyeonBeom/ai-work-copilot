@@ -22,12 +22,10 @@ export function AuthProvider({ children }) {
       setUser(response.data.data);
     } catch (error) {
       console.error('사용자 정보 조회 실패:', error);
-      // Token이 유효하지 않으면 정리
-      if (error.response?.status === 401) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        setUser(null);
-      }
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      setUser(null);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +57,7 @@ export function AuthProvider({ children }) {
 
   // 마운트 시 토큰이 있으면 사용자 정보 조회
   useEffect(() => {
-    fetchUser();
+    fetchUser().catch(() => {});
   }, [fetchUser]);
 
   const value = {
