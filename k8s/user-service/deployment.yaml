@@ -55,6 +55,8 @@ spec:
                   key: MAIL_PASSWORD
             - name: REDIS_HOST
               value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
           volumeMounts:
             - name: h2-data
               mountPath: /data
