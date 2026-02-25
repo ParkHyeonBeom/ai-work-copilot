@@ -6,6 +6,10 @@ import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import OnboardingPage from './pages/OnboardingPage';
 import DashboardPage from './pages/DashboardPage';
 import BriefingPage from './pages/BriefingPage';
+import PendingApprovalPage from './pages/PendingApprovalPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
+import RejectedPage from './pages/RejectedPage';
+import AdminPage from './pages/AdminPage';
 
 /**
  * 인증이 필요한 라우트를 보호하는 컴포넌트
@@ -52,6 +56,9 @@ export default function App() {
       {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+      <Route path="/pending-approval" element={<PendingApprovalPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/rejected" element={<RejectedPage />} />
 
       {/* Onboarding (protected but no layout) */}
       <Route
@@ -76,6 +83,7 @@ export default function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/briefing/:id" element={<BriefingPage />} />
         <Route path="/briefings" element={<BriefingPage />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Route>
 
       {/* Default redirect */}

@@ -42,6 +42,18 @@ export const drive = {
     client.get('/integrations/drive/files', { params: { max } }),
 };
 
+// ─── Admin ──────────────────────────────────────────────
+export const admin = {
+  /** 승인 대기 유저 목록 */
+  getPendingUsers: () => client.get('/admin/users/pending'),
+
+  /** 유저 승인 */
+  approveUser: (userId) => client.post(`/admin/users/${userId}/approve`),
+
+  /** 유저 거부 */
+  rejectUser: (userId) => client.post(`/admin/users/${userId}/reject`),
+};
+
 // ─── Briefings ─────────────────────────────────────────
 export const briefings = {
   /** 일일 브리핑 생성 요청 */

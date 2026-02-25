@@ -13,11 +13,6 @@ spring:
     activate:
       on-profile: local
 
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
-
   datasource:
     url: jdbc:h2:mem:userdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -49,7 +44,7 @@ spring:
               - openid
               - email
               - profile
-              - https://www.googleapis.com/auth/calendar
+              - https://www.googleapis.com/auth/calendar.readonly
               - https://www.googleapis.com/auth/gmail.readonly
               - https://www.googleapis.com/auth/drive.readonly
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
@@ -59,6 +54,15 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
 jwt:
   secret: ${JWT_SECRET:dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
   access-token-expiry: 3600000     # 1시간
@@ -66,17 +70,13 @@ jwt:
 
 app:
   frontend-url: http://localhost:5173
+  admin-email: ${ADMIN_EMAIL:admin@workcopilot.com}
 
 ---
 spring:
   config:
     activate:
       on-profile: k8s
-
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
   datasource:
     url: jdbc:h2:mem:userdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
@@ -108,7 +108,7 @@ spring:
               - openid
               - email
               - profile
-              - https://www.googleapis.com/auth/calendar
+              - https://www.googleapis.com/auth/calendar.readonly
               - https://www.googleapis.com/auth/gmail.readonly
               - https://www.googleapis.com/auth/drive.readonly
             redirect-uri: "https://nonnaval-tragicomical-eliana.ngrok-free.dev/login/oauth2/code/google"
@@ -118,6 +118,15 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
 jwt:
   secret: ${JWT_SECRET:change-me-in-production}
   access-token-expiry: 3600000
@@ -125,6 +134,7 @@ jwt:
 
 app:
   frontend-url: https://nonnaval-tragicomical-eliana.ngrok-free.dev
+  admin-email: ${ADMIN_EMAIL:admin@workcopilot.com}
 
 ---
 spring:

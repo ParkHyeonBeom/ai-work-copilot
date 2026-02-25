@@ -55,9 +55,10 @@ public class LlmRouter {
     /**
      * taskType에 따라 적절한 LLM으로 라우팅하여 요청을 처리한다.
      *
-     * - "classify", "keyword" -> Ollama (Llama 3.1 8B) - 비용 절감
-     * - "briefing" -> Claude Sonnet (긴 컨텍스트, 정확도)
-     * - "summarize" -> Claude Sonnet (긴 컨텍스트)
+     * - "classify", "keyword" → Ollama (Llama 3.1 8B) - 비용 절감
+     * - "briefing", "summarize" → Claude Sonnet → (비활성 시) Ollama 폴백
+     *
+     * 실제 폴백 체인: briefing → Claude → (Claude 비활성) → Ollama → mock
      */
     public AiResponse route(String taskType, String promptText) {
         return switch (taskType.toLowerCase()) {

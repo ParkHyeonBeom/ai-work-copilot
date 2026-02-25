@@ -1,8 +1,16 @@
 # AI Work Copilot - 프로젝트 규칙
 
 ## 프로젝트 개요
-Google Calendar + Gmail + Drive를 분석하여 AI 업무 브리핑을 제공하는 서비스.
-Salesforce 개발자의 백엔드 이직 포트폴리오.
+사내용 업무 분석 자동화 솔루션.
+Google Calendar + Gmail + Drive 데이터를 Self-hosted LLM으로 분석하여 일일 업무 브리핑을 자동 생성.
+관리자 승인 기반 접근 제어 + Audit Logging으로 기업 보안 요건 충족.
+
+## 보안 아키텍처
+- **Self-hosted LLM**: Ollama (Llama 3.1 8B) 사내 서버 운영, 외부 API 의존 최소화
+- **관리자 승인 가입**: OAuth 로그인 → PENDING_APPROVAL → 관리자 승인 → 이메일 인증(Redis TTL) → ACTIVE
+- **Audit Logging**: AOP 기반 감사 추적 (@Audited), 비동기 DB 저장
+- **Google API**: calendar.readonly, gmail.readonly, drive.readonly (최소 권한)
+- **JWT**: role + status claims 포함, ACTIVE가 아닌 사용자는 API 접근 제한
 
 ## 기술 스택
 - Java 21, Spring Boot 3.3.6, Spring AI 1.0.0-M4, Maven 멀티모듈
@@ -12,8 +20,8 @@ Salesforce 개발자의 백엔드 이직 포트폴리오.
 
 ## 모듈 구조
 ```
-common/               → 공통 (ApiResponse, BaseEntity, ErrorCode, DomainEvent)
-user-service/          → OAuth2 + JWT + 회원 + 온보딩 (포트 8081)
+common/               → 공통 (ApiResponse, BaseEntity, ErrorCode, AuditLog)
+user-service/          → OAuth2 + JWT + 관리자 승인 + 이메일 인증 (포트 8081)
 integration-service/   → Google Calendar + Gmail + Drive (포트 8082)
 ai-router-service/     → Spring AI: LLM 라우팅 + RAG (포트 8083)
 briefing-service/      → 일일 브리핑, SSE 스트리밍 (포트 8084)
@@ -36,18 +44,22 @@ frontend/             → React 18 + Vite (포트 5173)
 - 테스트 메서드명: `메서드명_조건_기대결과` (예: `findByEmail_존재하는이메일_유저반환`)
 
 ## 프로파일
-- `local`: H2 인메모리 + Redis/Kafka 없이 동작
+- `local`: H2 인메모리 + Redis localhost
+- `k8s`: H2 인메모리 + K3s 클러스터 환경
 - `prod`: PostgreSQL + Redis + Kafka + Milvus
 
 ## LLM 라우팅
 | 작업 | 모델 | 이유 |
 |------|------|------|
-| 텍스트 분류/키워드 | Ollama Llama 3.1 8B | 비용 절감 |
-| 종합 브리핑 | GPT-4o (Function Calling) | 정확도 |
-| 긴 문서 요약 | Claude Sonnet | 긴 컨텍스트 |
+| 텍스트 분류/키워드 | Ollama Llama 3.1 8B | Self-hosted, 비용 절감 |
+| 종합 브리핑 | Claude Sonnet → Ollama 폴백 | 정확도 우선 |
+| 긴 문서 요약 | Claude Sonnet → Ollama 폴백 | 긴 컨텍스트 |
 
-## 서버 접속
-- Windows 서버: `ssh homeserver` (= `ssh -p 2222 gusqja@100.95.227.98`)
+## 인프라 현황 + 제한사항
+- Windows 홈서버 1대: K3s 단일 노드, Ollama GPU (RTX)
+- 네트워크: Tailscale VPN + ngrok 터널링
+- 제한: HA 미지원 (단일 노드), GPU 메모리 제한으로 8B 모델만 운용
+- 서버 접속: `ssh homeserver` (= `ssh -p 2222 gusqja@100.95.227.98`)
 - K3s: `kh get nodes` (= `KUBECONFIG=~/.kube/config-home kubectl`)
 
 ## 개발 가이드

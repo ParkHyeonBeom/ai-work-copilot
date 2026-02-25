@@ -7,6 +7,8 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.Events;
+import com.workcopilot.common.audit.AuditAction;
+import com.workcopilot.common.audit.Audited;
 import com.workcopilot.common.exception.BusinessException;
 import com.workcopilot.common.exception.ErrorCode;
 import com.workcopilot.common.util.DateTimeUtil;
@@ -37,6 +39,7 @@ public class CalendarService {
     @Qualifier("googleApplicationName")
     private final String applicationName;
 
+    @Audited(action = AuditAction.CALENDAR_ACCESSED)
     public List<CalendarEventDto> getTodayEvents(Long userId) {
         log.info("오늘 일정 조회: userId={}", userId);
 
@@ -47,6 +50,7 @@ public class CalendarService {
         return getEvents(userId, startOfDay, endOfDay);
     }
 
+    @Audited(action = AuditAction.CALENDAR_ACCESSED)
     public List<CalendarEventDto> getUpcomingEvents(Long userId, int days) {
         log.info("향후 {}일 일정 조회: userId={}", days, userId);
 

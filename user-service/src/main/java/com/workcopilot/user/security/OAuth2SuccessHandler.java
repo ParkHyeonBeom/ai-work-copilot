@@ -1,8 +1,11 @@
 package com.workcopilot.user.security;
 
+import com.workcopilot.common.audit.AuditAction;
+import com.workcopilot.common.audit.Audited;
 import com.workcopilot.user.entity.Role;
 import com.workcopilot.user.entity.User;
 import com.workcopilot.user.entity.UserSettings;
+import com.workcopilot.user.entity.UserStatus;
 import com.workcopilot.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,6 +33,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
+
+    @Value("${app.admin-email:admin@workcopilot.com}")
+    private String adminEmail;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -64,21 +70,35 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String accessToken = jwtProvider.generateAccessToken(user);
         String refreshToken = jwtProvider.generateRefreshToken(user);
 
-        log.info("OAuth2 로그인 성공: userId={}, email={}", user.getId(), user.getEmail());
+        log.info("OAuth2 로그인 성공: userId={}, email={}, status={}", user.getId(), user.getEmail(), user.getStatus());
 
-        String redirectUrl = String.format("%s/oauth/callback?accessToken=%s&refreshToken=%s",
-                frontendUrl, accessToken, refreshToken);
+        String redirectUrl;
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            redirectUrl = String.format("%s/oauth/callback?accessToken=%s&refreshToken=%s",
+                    frontendUrl, accessToken, refreshToken);
+        } else {
+            redirectUrl = switch (user.getStatus()) {
+                case PENDING_APPROVAL -> String.format("%s/pending-approval?accessToken=%s", frontendUrl, accessToken);
+                case EMAIL_VERIFICATION -> String.format("%s/verify-email?accessToken=%s", frontendUrl, accessToken);
+                case REJECTED -> String.format("%s/rejected", frontendUrl);
+                default -> String.format("%s/oauth/callback?accessToken=%s&refreshToken=%s",
+                        frontendUrl, accessToken, refreshToken);
+            };
+        }
         response.sendRedirect(redirectUrl);
     }
 
     private User createUser(String googleId, String email, String name, String picture) {
-        log.info("신규 사용자 생성: email={}", email);
+        boolean isAdmin = adminEmail.equalsIgnoreCase(email);
+        log.info("신규 사용자 생성: email={}, isAdmin={}", email, isAdmin);
+
         return userRepository.save(User.builder()
                 .googleId(googleId)
                 .email(email)
                 .name(name)
                 .profileImageUrl(picture)
-                .role(Role.USER)
+                .role(isAdmin ? Role.ADMIN : Role.USER)
+                .status(isAdmin ? UserStatus.ACTIVE : UserStatus.PENDING_APPROVAL)
                 .settings(UserSettings.defaults())
                 .build());
     }

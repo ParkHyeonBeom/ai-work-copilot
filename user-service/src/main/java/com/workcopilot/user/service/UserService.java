@@ -1,5 +1,7 @@
 package com.workcopilot.user.service;
 
+import com.workcopilot.common.audit.AuditAction;
+import com.workcopilot.common.audit.Audited;
 import com.workcopilot.common.exception.BusinessException;
 import com.workcopilot.common.exception.ErrorCode;
 import com.workcopilot.user.dto.GoogleTokenResponse;
@@ -28,6 +30,7 @@ public class UserService {
     }
 
     @Transactional
+    @Audited(action = AuditAction.SETTINGS_CHANGED)
     public UserResponse updateSettings(Long userId, UpdateSettingsRequest request) {
         User user = findUserById(userId);
 
@@ -50,6 +53,7 @@ public class UserService {
     }
 
     @Transactional
+    @Audited(action = AuditAction.ONBOARDING_COMPLETED)
     public UserResponse completeOnboarding(Long userId, OnboardingRequest request) {
         User user = findUserById(userId);
 

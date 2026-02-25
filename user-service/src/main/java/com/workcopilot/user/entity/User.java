@@ -29,6 +29,11 @@ public class User extends BaseEntity {
     @Builder.Default
     private Role role = Role.USER;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private UserStatus status = UserStatus.PENDING_APPROVAL;
+
     @Builder.Default
     private boolean onboardingCompleted = false;
 
@@ -64,5 +69,17 @@ public class User extends BaseEntity {
     public void updateProfile(String name, String profileImageUrl) {
         this.name = name;
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void approve() {
+        this.status = UserStatus.EMAIL_VERIFICATION;
+    }
+
+    public void verify() {
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public void reject() {
+        this.status = UserStatus.REJECTED;
     }
 }

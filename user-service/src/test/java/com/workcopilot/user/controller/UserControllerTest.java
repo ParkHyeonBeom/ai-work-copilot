@@ -74,7 +74,8 @@ class UserControllerTest {
     private UserResponse createTestResponse() {
         return new UserResponse(
                 1L, "test@example.com", "테스트", null,
-                Role.USER, false, UserSettings.defaults(),
+                Role.USER, com.workcopilot.user.entity.UserStatus.ACTIVE,
+                false, UserSettings.defaults(),
                 LocalDateTime.now()
         );
     }

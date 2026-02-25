@@ -5,6 +5,8 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
+import com.workcopilot.common.audit.AuditAction;
+import com.workcopilot.common.audit.Audited;
 import com.workcopilot.common.exception.BusinessException;
 import com.workcopilot.common.exception.ErrorCode;
 import com.workcopilot.integration.dto.DriveFileDto;
@@ -50,6 +52,7 @@ public class DriveService {
     @Qualifier("googleApplicationName")
     private final String applicationName;
 
+    @Audited(action = AuditAction.DRIVE_ACCESSED)
     public List<DriveFileDto> getRecentFiles(Long userId, int maxResults) {
         log.info("최근 파일 조회: userId={}, maxResults={}", userId, maxResults);
 

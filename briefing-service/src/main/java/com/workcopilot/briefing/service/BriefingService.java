@@ -6,6 +6,8 @@ import com.workcopilot.briefing.dto.*;
 import com.workcopilot.briefing.entity.Briefing;
 import com.workcopilot.briefing.entity.BriefingStatus;
 import com.workcopilot.briefing.repository.BriefingRepository;
+import com.workcopilot.common.audit.AuditAction;
+import com.workcopilot.common.audit.Audited;
 import com.workcopilot.common.exception.BusinessException;
 import com.workcopilot.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class BriefingService {
     private final AiRouterClient aiRouterClient;
 
     @Transactional
+    @Audited(action = AuditAction.BRIEFING_REQUESTED)
     public BriefingResponse generateDailyBriefing(Long userId) {
         log.info("일일 브리핑 생성 시작: userId={}", userId);
 

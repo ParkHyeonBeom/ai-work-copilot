@@ -6,6 +6,8 @@ import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.Message;
 import com.google.api.services.gmail.model.MessagePartHeader;
+import com.workcopilot.common.audit.AuditAction;
+import com.workcopilot.common.audit.Audited;
 import com.workcopilot.common.exception.BusinessException;
 import com.workcopilot.common.exception.ErrorCode;
 import com.workcopilot.integration.dto.EmailDto;
@@ -36,6 +38,7 @@ public class GmailService {
     @Qualifier("googleApplicationName")
     private final String applicationName;
 
+    @Audited(action = AuditAction.EMAIL_ACCESSED)
     public List<EmailDto> getRecentEmails(Long userId, int maxResults) {
         log.info("최근 이메일 조회: userId={}, maxResults={}", userId, maxResults);
 
@@ -68,6 +71,7 @@ public class GmailService {
         }
     }
 
+    @Audited(action = AuditAction.EMAIL_ACCESSED)
     public List<EmailDto> getImportantEmails(Long userId, List<String> importantDomains) {
         log.info("중요 이메일 조회: userId={}, domains={}", userId, importantDomains);
 

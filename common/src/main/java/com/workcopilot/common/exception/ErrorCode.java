@@ -18,6 +18,12 @@ public enum ErrorCode {
     INVALID_TOKEN("A003", "유효하지 않은 토큰입니다.", 401),
     EXPIRED_TOKEN("A004", "만료된 토큰입니다.", 401),
     OAUTH_FAILED("A005", "OAuth 인증에 실패했습니다.", 401),
+    PENDING_APPROVAL("A006", "관리자 승인 대기 중입니다.", 403),
+    EMAIL_VERIFICATION_REQUIRED("A007", "이메일 인증이 필요합니다.", 403),
+    INVALID_VERIFICATION_CODE("A008", "인증코드가 유효하지 않습니다.", 400),
+    VERIFICATION_CODE_EXPIRED("A009", "인증코드가 만료되었습니다.", 400),
+    USER_REJECTED("A010", "가입이 거부되었습니다.", 403),
+    ADMIN_ONLY("A011", "관리자만 접근 가능합니다.", 403),
 
     // User
     USER_NOT_FOUND("U001", "사용자를 찾을 수 없습니다.", 404),

@@ -68,7 +68,7 @@ spring:
       chat:
         options:
           model: llama3.1:8b-instruct-q4_K_M
-          num-predict: 2048
+          num-predict: 4096
       embedding:
         options:
           model: nomic-embed-text
@@ -165,7 +165,7 @@ spring:
       chat:
         options:
           model: llama3.1:8b-instruct-q4_K_M
-          num-predict: 2048
+          num-predict: 4096
 
 integration-service:
   url: http://integration-service:8082

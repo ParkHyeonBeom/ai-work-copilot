@@ -65,10 +65,16 @@
             <artifactId>mapstruct</artifactId>
         </dependency>
 
-        <!-- Redis (토큰 저장) -->
+        <!-- Redis (토큰 저장 + 인증코드) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- Mail (인증코드 발송) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
         <!-- DB -->

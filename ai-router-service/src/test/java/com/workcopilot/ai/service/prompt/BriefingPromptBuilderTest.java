@@ -121,7 +121,7 @@ class BriefingPromptBuilderTest {
 
         // then
         assertThat(systemPrompt).isNotNull();
-        assertThat(systemPrompt).contains("AI 업무 브리핑 어시스턴트");
+        assertThat(systemPrompt).contains("사내 업무 브리핑 AI");
         assertThat(systemPrompt).contains("JSON");
     }
 

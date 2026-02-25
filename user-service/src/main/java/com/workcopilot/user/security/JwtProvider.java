@@ -48,6 +48,7 @@ public class JwtProvider {
                 .subject(String.valueOf(user.getId()))
                 .claim("email", user.getEmail())
                 .claim("role", user.getRole().name())
+                .claim("status", user.getStatus().name())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
@@ -84,5 +85,25 @@ public class JwtProvider {
                 .getPayload();
 
         return claims.get("email", String.class);
+    }
+
+    public String getRoleFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.get("role", String.class);
+    }
+
+    public String getStatusFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.get("status", String.class);
     }
 }

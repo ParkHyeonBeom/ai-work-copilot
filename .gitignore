@@ -31,3 +31,11 @@ logs/
 # Node (frontend)
 frontend/node_modules/
 frontend/dist/
+
+# bkit orchestration (runtime state)
+.bkit/
+
+# PDCA tracking (auto-generated)
+docs/.bkit-memory.json
+docs/.pdca-status.json
+docs/.pdca-snapshots/
