@@ -39,7 +39,7 @@ export const gmail = {
 export const drive = {
   /** 최근 파일 조회 */
   getRecentFiles: (max = 20) =>
-    client.get('/integrations/drive/files/recent', { params: { max } }),
+    client.get('/integrations/drive/files', { params: { max } }),
 };
 
 // ─── Briefings ─────────────────────────────────────────
