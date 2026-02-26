@@ -44,8 +44,8 @@ frontend/             → React 18 + Vite (포트 5173)
 - 테스트 메서드명: `메서드명_조건_기대결과` (예: `findByEmail_존재하는이메일_유저반환`)
 
 ## 프로파일
-- `local`: H2 인메모리 + Redis localhost
-- `k8s`: H2 인메모리 + K3s 클러스터 환경
+- `local`: H2 파일 기반 + Redis localhost
+- `k8s`: H2 파일 기반 (PVC) + Redis (K8s Pod) + K3s 클러스터 환경
 - `prod`: PostgreSQL + Redis + Kafka + Milvus
 
 ## LLM 라우팅
@@ -64,6 +64,15 @@ frontend/             → React 18 + Vite (포트 5173)
 
 ## 개발 가이드
 상세 구현 가이드: `docs/dev-guide.md` → `/guide N` 커맨드로 Day별 참조
+
+## 배포 규칙 (필수)
+**배포 관련 작업 시 반드시 `docs/deploy-checklist.md`를 참조할 것.**
+- 코드만 변경 → `git push`만으로 CD 자동 배포
+- 새 환경변수/Secret 추가 → deployment.yaml + secrets.yaml 동시 수정
+- 새 서비스(Pod) 추가 → deployment + service + kustomization + CD + Gateway 라우트
+- 새 인프라 추가 → K8s 매니페스트 + 연결 env (포트 충돌 주의)
+- **local 프로필 설정 추가 시 k8s 프로필에도 반드시 동일 추가**
+- H2 파일 기반 서비스는 `strategy: Recreate` 필수
 
 ## Google OAuth2
 - Google Cloud Console에서 OAuth2 Client ID/Secret 발급 완료
