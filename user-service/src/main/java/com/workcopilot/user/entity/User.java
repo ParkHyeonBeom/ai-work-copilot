@@ -94,4 +94,9 @@ public class User extends BaseEntity {
     public void reject() {
         this.status = UserStatus.REJECTED;
     }
+
+    public void promoteToAdmin() {
+        this.role = Role.ADMIN;
+        this.status = UserStatus.ACTIVE;
+    }
 }

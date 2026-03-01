@@ -24,6 +24,19 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "k8s"
+            - name: DB_HOST
+              value: "mysql"
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: "workcopilot_briefing"
+            - name: DB_USERNAME
+              value: "workcopilot"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

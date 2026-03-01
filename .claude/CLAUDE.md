@@ -14,9 +14,10 @@ Google Calendar + Gmail + Drive 데이터를 Self-hosted LLM으로 분석하여 
 
 ## 기술 스택
 - Java 21, Spring Boot 3.3.6, Spring AI 1.0.0-M4, Maven 멀티모듈
-- PostgreSQL 16, Redis 7, Kafka (KRaft), Milvus 2.4
+- MySQL 8.0, Redis 7, Kafka (KRaft), Milvus 2.4
 - React 18, Vite, TailwindCSS 4
 - K3s (Windows 홈서버), Ollama (Llama 3.1 8B + nomic-embed-text)
+- Docker Compose (로컬 개발 환경)
 
 ## 모듈 구조
 ```
@@ -44,9 +45,9 @@ frontend/             → React 18 + Vite (포트 5173)
 - 테스트 메서드명: `메서드명_조건_기대결과` (예: `findByEmail_존재하는이메일_유저반환`)
 
 ## 프로파일
-- `local`: H2 파일 기반 + Redis localhost
-- `k8s`: H2 파일 기반 (PVC) + Redis (K8s Pod) + K3s 클러스터 환경
-- `prod`: PostgreSQL + Redis + Kafka + Milvus
+- `local`: MySQL 8.0 (Docker Compose) + Redis (Docker Compose)
+- `k8s`: MySQL 8.0 (K8s StatefulSet) + Redis (K8s Pod) + K3s 클러스터 환경
+- `prod`: MySQL 8.0 + Redis + Kafka + Milvus
 
 ## LLM 라우팅
 | 작업 | 모델 | 이유 |
@@ -62,6 +63,9 @@ frontend/             → React 18 + Vite (포트 5173)
 - 서버 접속: `ssh homeserver` (= `ssh -p 2222 gusqja@100.95.227.98`)
 - K3s: `kh get nodes` (= `KUBECONFIG=~/.kube/config-home kubectl`)
 
+## API Swagger
+- Swagger UI/ OpenAPI를 활용한 API 문서화지금은 
+
 ## 개발 가이드
 상세 구현 가이드: `docs/dev-guide.md` → `/guide N` 커맨드로 Day별 참조
 
@@ -72,9 +76,13 @@ frontend/             → React 18 + Vite (포트 5173)
 - 새 서비스(Pod) 추가 → deployment + service + kustomization + CD + Gateway 라우트
 - 새 인프라 추가 → K8s 매니페스트 + 연결 env (포트 충돌 주의)
 - **local 프로필 설정 추가 시 k8s 프로필에도 반드시 동일 추가**
-- H2 파일 기반 서비스는 `strategy: Recreate` 필수
 
 ## Google OAuth2
 - Google Cloud Console에서 OAuth2 Client ID/Secret 발급 완료
 - 환경변수: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (K8s Secret으로 관리)
 - 리디렉션 URI: `http://localhost:30081/login/oauth2/code/google`
+
+## 프로젝트 진행 
+- 수정사항이 많은 경우, 적절히 서브에이전트를 활용하여 병렬로 처리할것
+- 이때 이미 작성된 커맨드, 스킬을 적절히 활용하여 수정의 퀄리티를 높힐것
+- 테스트를 철저히하여 완성도를 높히는것에 초점을 둘것

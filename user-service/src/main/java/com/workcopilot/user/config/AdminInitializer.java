@@ -26,10 +26,23 @@ public class AdminInitializer implements CommandLineRunner {
         userRepository.findByEmail(adminEmail).ifPresentOrElse(
                 user -> {
                     if (user.getRole() != Role.ADMIN || user.getStatus() != UserStatus.ACTIVE) {
-                        log.info("관리자 계정 권한/상태 업데이트: email={}", adminEmail);
+                        user.promoteToAdmin();
+                        userRepository.save(user);
+                        log.info("관리자 계정 권한/상태 업데이트 완료: email={}", adminEmail);
+                    } else {
+                        log.info("관리자 계정 확인됨: email={}", adminEmail);
                     }
                 },
-                () -> log.info("관리자 이메일 설정됨: {}. 해당 이메일로 OAuth 로그인 시 자동 ADMIN+ACTIVE 부여", adminEmail)
+                () -> {
+                    User admin = userRepository.save(User.builder()
+                            .email(adminEmail)
+                            .name("Admin")
+                            .role(Role.ADMIN)
+                            .status(UserStatus.ACTIVE)
+                            .settings(UserSettings.defaults())
+                            .build());
+                    log.info("관리자 계정 자동 생성 완료: email={}, id={}", adminEmail, admin.getId());
+                }
         );
     }
 }

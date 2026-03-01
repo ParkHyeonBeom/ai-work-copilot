@@ -6,12 +6,13 @@ resources:
 - gateway/deployment.yaml
 - gateway/service.yaml
 - gateway/ingress.yaml
+- mysql/statefulset.yaml
+- mysql/service.yaml
+- mysql/configmap.yaml
 - user-service/deployment.yaml
 - user-service/service.yaml
-- user-service/pvc.yaml
 - integration-service/deployment.yaml
 - integration-service/service.yaml
-- integration-service/pvc.yaml
 - ai-router-service/deployment.yaml
 - ai-router-service/service.yaml
 - briefing-service/deployment.yaml
