@@ -10,6 +10,7 @@ public record EmailDto(
         String snippet,
         LocalDateTime receivedAt,
         List<String> labels,
-        boolean isImportant
+        boolean isImportant,
+        boolean isRead
 ) {
 }

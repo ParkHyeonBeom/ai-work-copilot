@@ -50,7 +50,7 @@ class DataCollectorServiceTest {
 
         List<EmailDto> emails = List.of(
                 new EmailDto("m1", "sender@test.com", "제목", "내용 미리보기",
-                        LocalDateTime.now(), List.of("INBOX"), false)
+                        LocalDateTime.now(), List.of("INBOX"), false, true)
         );
 
         List<DriveFileDto> files = List.of(
@@ -87,7 +87,7 @@ class DataCollectorServiceTest {
 
         List<EmailDto> emails = List.of(
                 new EmailDto("m1", "sender@test.com", "제목", "내용",
-                        LocalDateTime.now(), List.of("INBOX"), false)
+                        LocalDateTime.now(), List.of("INBOX"), false, true)
         );
         given(gmailService.getRecentEmails(anyLong(), anyInt())).willReturn(emails);
 

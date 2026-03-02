@@ -167,6 +167,7 @@ public class GmailService {
                 : Collections.emptyList();
 
         boolean isImportant = labels.contains("IMPORTANT");
+        boolean isRead = !labels.contains("UNREAD");
 
         return new EmailDto(
                 message.getId(),
@@ -175,7 +176,8 @@ public class GmailService {
                 message.getSnippet(),
                 receivedAt,
                 labels,
-                isImportant
+                isImportant,
+                isRead
         );
     }
 

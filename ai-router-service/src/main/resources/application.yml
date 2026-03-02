@@ -74,6 +74,11 @@ ai:
     enabled: ${ANTHROPIC_ENABLED:false}
   ollama:
     enabled: ${OLLAMA_ENABLED:true}
+  gemini:
+    enabled: ${GEMINI_ENABLED:false}
+    api-key: ${GEMINI_API_KEY:}
+    model: gemini-2.5-flash
+    base-url: https://generativelanguage.googleapis.com
 
 milvus:
   host: ${MILVUS_HOST:localhost}
@@ -123,6 +128,11 @@ spring:
 ai:
   ollama:
     enabled: true
+  gemini:
+    enabled: ${GEMINI_ENABLED:false}
+    api-key: ${GEMINI_API_KEY:}
+    model: gemini-2.5-flash
+    base-url: https://generativelanguage.googleapis.com
 
 ---
 spring:
@@ -175,3 +185,8 @@ integration-service:
 ai:
   ollama:
     enabled: ${OLLAMA_ENABLED:true}
+  gemini:
+    enabled: ${GEMINI_ENABLED:false}
+    api-key: ${GEMINI_API_KEY:}
+    model: gemini-2.5-flash
+    base-url: https://generativelanguage.googleapis.com

@@ -15,6 +15,10 @@
 | PATCH | 부분 수정 | 200 |
 | DELETE | 삭제 | 204 |
 
+## 참고 사항
+• JPA/Hibernate를 활용한 데이터베이스 연동
+• QueryDSL 등 동적 쿼리 빌더 사용
+• Spring Security, JWT 기반 인증/인가 구현
 ## 응답 형식
 모든 API는 `ApiResponse<T>`로 감싼다:
 ```java

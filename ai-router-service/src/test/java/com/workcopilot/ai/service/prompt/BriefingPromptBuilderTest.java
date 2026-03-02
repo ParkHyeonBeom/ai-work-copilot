@@ -99,7 +99,8 @@ class BriefingPromptBuilderTest {
                 "지금 바로 보고서를 제출해주세요.",
                 LocalDateTime.of(2026, 2, 24, 9, 0),
                 List.of("INBOX", "IMPORTANT"),
-                true
+                true,
+                false
         );
         BriefingRequest request = new BriefingRequest(
                 1L, List.of(), List.of(importantEmail), List.of()
@@ -110,6 +111,7 @@ class BriefingPromptBuilderTest {
 
         // then
         assertThat(prompt).contains("[중요]");
+        assertThat(prompt).contains("[미읽음]");
         assertThat(prompt).contains("긴급 보고 요청");
     }
 
@@ -122,7 +124,60 @@ class BriefingPromptBuilderTest {
         // then
         assertThat(systemPrompt).isNotNull();
         assertThat(systemPrompt).contains("사내 업무 브리핑 AI");
+        assertThat(systemPrompt).contains("일정(캘린더)을 중심으로");
         assertThat(systemPrompt).contains("JSON");
+    }
+
+    @Test
+    @DisplayName("build_미읽은이메일포함_미읽음알림섹션포함")
+    void build_미읽은이메일포함_미읽음알림섹션포함() {
+        EmailDto unreadEmail = new EmailDto(
+                "email-1", "boss@example.com", "긴급 보고 요청",
+                "지금 바로 보고서를 제출해주세요.",
+                LocalDateTime.of(2026, 2, 24, 9, 0),
+                List.of("INBOX", "IMPORTANT", "UNREAD"),
+                true,
+                false
+        );
+        BriefingRequest request = new BriefingRequest(
+                1L, List.of(), List.of(unreadEmail), List.of()
+        );
+
+        String prompt = briefingPromptBuilder.build(request);
+
+        assertThat(prompt).contains("미읽은 이메일 알림");
+        assertThat(prompt).contains("1건의 미읽은 이메일");
+        assertThat(prompt).contains("[미읽음]");
+    }
+
+    @Test
+    @DisplayName("build_일정과이메일있는경우_교차분석힌트섹션포함")
+    void build_일정과이메일있는경우_교차분석힌트섹션포함() {
+        CalendarEventDto event = new CalendarEventDto(
+                "event-1", "팀 스탠드업 회의", "주간 업무 공유",
+                LocalDateTime.of(2026, 2, 24, 10, 0),
+                LocalDateTime.of(2026, 2, 24, 10, 30),
+                "회의실 A",
+                List.of("alice@example.com", "bob@example.com"),
+                false
+        );
+        EmailDto email = new EmailDto(
+                "email-1", "alice@example.com", "회의 자료 공유",
+                "스탠드업 회의 관련 자료입니다.",
+                LocalDateTime.of(2026, 2, 24, 8, 30),
+                List.of("INBOX"),
+                false,
+                true
+        );
+        BriefingRequest request = new BriefingRequest(
+                1L, List.of(event), List.of(email), List.of()
+        );
+
+        String prompt = briefingPromptBuilder.build(request);
+
+        assertThat(prompt).contains("교차 분석 힌트");
+        assertThat(prompt).contains("회의: 팀 스탠드업 회의");
+        assertThat(prompt).contains("참석자가 보낸 이메일");
     }
 
     private BriefingRequest createFullBriefingRequest() {
@@ -151,14 +206,16 @@ class BriefingPromptBuilderTest {
                         "이번 주 금요일까지 프로젝트 진행상황을 보고해주세요.",
                         LocalDateTime.of(2026, 2, 24, 8, 30),
                         List.of("INBOX", "IMPORTANT"),
-                        true
+                        true,
+                        false
                 ),
                 new EmailDto(
                         "email-2", "hr@example.com", "2월 급여 명세서",
                         "2월 급여 명세서가 발행되었습니다.",
                         LocalDateTime.of(2026, 2, 24, 9, 0),
                         List.of("INBOX"),
-                        false
+                        false,
+                        true
                 )
         );
 

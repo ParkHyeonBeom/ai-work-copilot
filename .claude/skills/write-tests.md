@@ -75,5 +75,5 @@ class UserControllerTest {
 - 테스트 메서드명: `메서드명_조건_기대결과` (한글 가능)
 - given-when-then 패턴 필수
 - `@DisplayName`으로 한글 설명
-- AssertJ 사용 (`assertThat`, `assertThatThrownBy`)
+- Junit 사용 (`assertThat`, `assertThatThrownBy`)
 - BDDMockito 사용 (`given`, `then`, `willReturn`)
