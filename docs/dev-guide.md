@@ -1,354 +1,422 @@
 # AI Work Copilot — 개발 가이드
 
 > Claude Code에서 `/guide N` 커맨드로 Day별 참조
+> `/daily` 커맨드로 현재 진행 상황 파악
 
 ---
 
 ## 로드맵 요약
 
+### Phase 1: 기반 구축 (Day 1~6)
+
 | Day | 작업 | 상태 |
 |-----|------|------|
 | 1 | MacBook 환경 검증 + IntelliJ + Claude Code | ✅ 완료 |
-| 2 | Windows 서버 (WSL2, K3s, Ollama) | ⏸️ K3s까지 완료, Ollama K8s 배포 미완 |
-| 3 | 데이터 인프라 (PostgreSQL, Redis, Kafka, Milvus) | 🔶 Redis K8s 배포 완료, 나머지 미완 |
+| 2 | Windows 서버 (WSL2, K3s, Ollama) | ✅ 완료 (Ollama K8s 배포 미완) |
+| 3 | 데이터 인프라 (Redis K8s 배포) | ✅ 완료 (Kafka/Milvus 미완) |
 | 4 | Maven 멀티모듈 + 전체 POM + CLAUDE.md | ✅ 완료 |
 | 5 | Claude Code 스킬/에이전트/커맨드 세팅 | ✅ 완료 |
 | 6 | 워크플로우 테스트 | ✅ 완료 |
+
+### Phase 2: 핵심 서비스 (Day 7~18)
+
+| Day | 작업 | 상태 |
+|-----|------|------|
 | 7 | common 모듈 보강 | ✅ 완료 |
-| 8-9 | user-service (OAuth2, JWT, 온보딩) | ✅ 완료 |
-| — | user-service: 관리자 승인 가입 + 이메일 인증 + Audit Logging | ✅ 완료 |
-| 10 | integration-service: Google Calendar | ✅ 완료 |
-| — | integration-service: 캘린더 일정 생성 + 팀 필터링 + 참석자 알림 | ✅ 완료 |
+| 8-9 | user-service (OAuth2, JWT, 온보딩, 관리자 승인, 이메일 인증, Audit) | ✅ 완료 |
+| 10 | integration-service: Google Calendar + 일정 생성 + 팀 필터링 | ✅ 완료 |
 | 11 | integration-service: Gmail | ✅ 완료 |
-| 12 | integration-service: Google Drive + 전체 테스트 | ✅ 완료 |
+| 12 | integration-service: Google Drive + 통합 테스트 | ✅ 완료 |
 | 13-14 | ai-router-service (LLM 라우팅, RAG) | ✅ 완료 |
 | 15-16 | briefing-service (일일/회의 브리핑, SSE) | ✅ 완료 |
-| 17 | gateway | ✅ 완료 |
-| 18 | frontend (React 대시보드 + 온보딩 UI) | ✅ 완료 |
-| — | frontend: 캘린더 페이지 + 관리자 페이지 + 알림 벨 | ✅ 완료 |
+| 17 | gateway (Spring Cloud Gateway) | ✅ 완료 |
+| 18 | frontend (React 대시보드 + 온보딩 + 캘린더 + 관리자) | ✅ 완료 |
+
+### Phase 3: 안정화 + CI/CD (Day 19~25)
+
+| Day | 작업 | 상태 |
+|-----|------|------|
 | 19-20 | 프롬프트 튜닝, 캐싱, 비용 최적화 | ⏸️ 프로덕션 환경에서 진행 |
 | 21 | 통합 테스트 | ✅ 완료 |
-| 22-23 | Docker, Helm, CI/CD, Grafana | ✅ 완료 (Dockerfile + K8s + GitHub Actions CD + ArgoCD) |
-| 24-25 | README, API 문서, 데모 | ✅ 완료 (README + Springdoc OpenAPI) |
-| — | K8s 배포 안정화 (H2 PVC, Redis, Recreate 전략, 배포 체크리스트) | ✅ 완료 |
+| 22-23 | Dockerfile + K8s + GitHub Actions CD | ✅ 완료 |
+| 24-25 | README + Springdoc OpenAPI + 배포 체크리스트 | ✅ 완료 |
 
-### 현재 K8s 배포 현황
+### Phase 4: 인프라 전환 + 신규 기능
+
+| 작업 | 상태 |
+|------|------|
+| H2/PostgreSQL → MySQL 8.0 통일 + Docker Compose 로컬 환경 | ✅ 완료 |
+| Gemini LLM 연동 (gemini-2.5-flash) + 브리핑 프롬프트 개선 | ✅ 완료 |
+| 캘린더 이중 운영 (Google Calendar + Local DB) | ✅ 완료 |
+
+### Phase 5: chat-service + AI 에이전트
+
+| 작업 | 상태 |
+|------|------|
+| chat-service 구축 (WebSocket STOMP + REST API) | ✅ 완료 |
+| AI 에이전트 챗봇 (다중턴 대화 + 컨텍스트 수집) | ✅ 완료 |
+| chat-service K8s 배포 + CD 파이프라인 추가 | ✅ 완료 |
+
+### Phase 6: 채팅 고도화
+
+| 작업 | 상태 |
+|------|------|
+| Phase A: WebSocket Context Provider, Toast 알림, 날짜 구분선, Load More, 타이핑 표시 | ✅ 완료 |
+| Phase B: 메시지 삭제, 답장(Reply), 이미지 미리보기, 실시간 Unread, 브라우저 Push 알림 | ✅ 완료 |
+| Phase C: 메시지 수정, 리액션, D&D 파일, 검색, Presence, @멘션 | 🟣 예정 |
+
+---
+
+## 모듈 구조
+
+```
+common/               → 공통 (ApiResponse, BaseEntity, ErrorCode, AuditLog)
+user-service/          → OAuth2 + JWT + 관리자 승인 + 이메일 인증 (포트 8081)
+integration-service/   → Google Calendar + Gmail + Drive (포트 8082)
+ai-router-service/     → LLM 라우팅 + RAG + AI 에이전트 (포트 8083)
+briefing-service/      → 일일 브리핑, SSE 스트리밍 (포트 8084)
+chat-service/          → 실시간 채팅 (WebSocket STOMP + REST) (포트 8085)
+gateway/              → Spring Cloud Gateway (포트 8080)
+frontend/             → React 18 + Vite + TailwindCSS 4 (포트 5173)
+```
+
+---
+
+## 현재 K8s 배포 현황
 
 | Pod | 상태 | 비고 |
 |-----|------|------|
 | gateway | ✅ Running | Spring Cloud Gateway, ngrok 연동 |
-| user-service | ✅ Running | H2 파일 (PVC) + Redis + Mail |
-| integration-service | ✅ Running | H2 파일 (PVC) |
-| ai-router-service | ✅ Running | Ollama 미연결 (K8s 배포 필요) |
-| briefing-service | ✅ Running | Ollama 미연결 |
+| user-service | ✅ Running | MySQL + Redis + Mail |
+| integration-service | ✅ Running | MySQL + Google API |
+| ai-router-service | ✅ Running | Gemini 연동 (GEMINI_API_KEY 필요) |
+| briefing-service | ✅ Running | Gemini 연동 |
+| chat-service | ✅ Running | MySQL + WebSocket STOMP |
 | frontend | ✅ Running | React + Vite |
+| mysql | ✅ Running | 5개 DB (workcopilot, _integration, _ai, _briefing, _chat) |
 | redis | ✅ Running | 인증코드 저장용 |
-
-### 잔여 작업
-
-| 우선순위 | 작업 | 설명 |
-|----------|------|------|
-| 🔴 높음 | K8s PostgreSQL 전환 | H2 → PostgreSQL 마이그레이션, k8s 프로필 DB 변경, 무중단 배포(RollingUpdate) 전환 |
-| 🔴 높음 | Ollama K8s 배포 | Llama 3.1 8B + nomic-embed-text GPU Pod, ai-router/briefing 연동 |
-| 🟡 중간 | Kafka (KRaft) K8s 배포 | 비동기 이벤트 처리 (브리핑 요청 등) |
-| 🟡 중간 | Milvus K8s 배포 | RAG 벡터 검색용 |
-| 🟡 중간 | 프롬프트 튜닝 + 캐싱 | Ollama 연동 후 LLM 프롬프트 최적화, Redis 캐싱 |
-| 🟢 낮음 | Grafana + Prometheus | 모니터링 대시보드 |
-| 🟢 낮음 | Google OAuth 앱 인증 | "확인하지 않은 앱" 경고 제거 |
-| 🟣 예정 | 채팅 기능 | 사내 실시간 채팅 (WebSocket 기반) |
 
 ---
 
-## Day 7: common 모듈 보강
+## 잔여 작업
 
-### 목표
-GlobalExceptionHandler, 유틸리티 클래스 추가
+| 우선순위 | 작업 | 설명 |
+|----------|------|------|
+| 🔴 높음 | Ollama K8s 배포 | Llama 3.1 8B + nomic-embed-text GPU Pod, Gemini 폴백용 |
+| 🟡 중간 | 채팅 Phase C | 메시지 수정, 리액션, D&D 파일, 검색, Presence, @멘션 |
+| 🟡 중간 | Kafka (KRaft) K8s 배포 | 비동기 이벤트 처리 (브리핑 요청 등) |
+| 🟡 중간 | Milvus K8s 배포 | RAG 벡터 검색용 |
+| 🟡 중간 | 프롬프트 튜닝 + 캐싱 | LLM 프롬프트 최적화, Redis 캐싱 |
+| 🟡 중간 | Docker Compose Watch / 핫리로드 | 개발 시 수동 재빌드 자동화 |
+| 🟢 낮음 | Grafana + Prometheus | 모니터링 대시보드 |
+| 🟢 낮음 | Google OAuth 앱 인증 | "확인하지 않은 앱" 경고 제거 |
 
-### 작업
-1. `common/exception/GlobalExceptionHandler.java` — 전역 예외 처리
-   - BusinessException → ErrorCode 기반 응답
-   - MethodArgumentNotValidException → 필드별 에러 메시지
-   - Exception → 500 Internal Server Error
-2. `common/util/DateTimeUtil.java` — 날짜/시간 유틸
-3. `common/config/JpaConfig.java` — JPA Auditing 설정 (공통)
+---
+
+## DB 구성 (MySQL 8.0)
+
+H2/PostgreSQL에서 MySQL 8.0으로 통일 완료. 서비스별 DB 분리.
+
+| DB | 서비스 | 주요 테이블 |
+|----|--------|-------------|
+| workcopilot | user-service | users, audit_logs |
+| workcopilot_integration | integration-service | calendar_events |
+| workcopilot_ai | ai-router-service | conversation_histories, conversation_messages |
+| workcopilot_briefing | briefing-service | briefings |
+| workcopilot_chat | chat-service | chat_rooms, chat_messages, chat_participants, chat_files |
+
+- 초기화: `scripts/init-databases.sql`
+- Docker Compose: MySQL 컨테이너가 자동 초기화
+
+---
+
+## Docker Compose 로컬 개발
+
+```bash
+# 전체 서비스 빌드 + 실행
+mvn clean package -DskipTests && docker compose up --build
+
+# 특정 서비스만 재빌드
+mvn package -pl :chat-service -am -DskipTests && docker compose up -d --build chat-service
+
+# 로그 확인
+docker compose logs -f chat-service
+docker compose logs -f gateway
+```
+
+| 서비스 | 로컬 포트 | 컨테이너 포트 |
+|--------|-----------|---------------|
+| MySQL | 3306 | 3306 |
+| Redis | 6379 | 6379 |
+| user-service | 8081 | 8081 |
+| integration-service | 8082 | 8082 |
+| ai-router-service | 8083 | 8083 |
+| briefing-service | 8084 | 8084 |
+| chat-service | 8085 | 8085 |
+| gateway | 8080 | 8080 |
+| frontend | 5173 | 80 |
+
+---
+
+## LLM 라우팅
+
+| 작업 | 모델 | 이유 |
+|------|------|------|
+| AI 에이전트 대화 | Gemini 2.5 Flash → Ollama 폴백 | 빠른 응답 + 비용 절감 |
+| 종합 브리핑 | Gemini 2.5 Flash → Ollama 폴백 | 정확도 우선 |
+| 텍스트 분류/키워드 | Ollama Llama 3.1 8B | Self-hosted, 비용 절감 |
+
+환경변수: `GEMINI_ENABLED=true`, `GEMINI_API_KEY=your-key`
+
+---
+
+## chat-service 상세
+
+### 엔티티
+- **ChatRoom**: name, type (DIRECT/GROUP/GENERAL), lastMessageContent/At
+- **ChatParticipant**: userId, userName, lastReadMessageId (읽음 추적)
+- **ChatMessage**: type (TEXT/FILE), content, deleted, replyToMessageId
+- **ChatFile**: originalFileName, mimeType, fileSize
+
+### WebSocket (STOMP)
+```
+엔드포인트: /ws/chat
+애플리케이션 프리픽스: /app
+브로커: /topic (broadcast), /queue (private)
+사용자 프리픽스: /user
+
+메시지 전송: /app/chat.send/{roomId}     → /topic/room/{roomId}
+타이핑 표시: /app/chat.typing/{roomId}   → /topic/room/{roomId}/typing
+메시지 삭제: /app/chat.delete/{roomId}   → /topic/room/{roomId}
+알림:       서버 → /user/{userId}/queue/notifications
+```
+
+### REST API
+```
+POST   /api/chat/rooms                          → 채팅방 생성
+GET    /api/chat/rooms                          → 내 채팅방 목록
+GET    /api/chat/rooms/{roomId}                 → 채팅방 상세
+DELETE /api/chat/rooms/{roomId}                 → 채팅방 나가기
+POST   /api/chat/rooms/{roomId}/invite          → 멤버 초대
+GET    /api/chat/rooms/{roomId}/messages         → 메시지 히스토리 (cursor 페이징)
+DELETE /api/chat/rooms/{roomId}/messages/{msgId}  → 메시지 삭제
+POST   /api/chat/rooms/{roomId}/read             → 읽음 처리
+GET    /api/chat/unread-count                    → 전체 미읽음 수
+POST   /api/chat/rooms/{roomId}/files/upload     → 파일 업로드
+GET    /api/chat/files/{fileId}/download          → 파일 다운로드
+```
+
+### 고도화 기능 (Phase A+B 완료)
+- WebSocket Context Provider (글로벌 연결 공유)
+- Toast 알림 (다른 페이지에서 채팅 수신 시)
+- 날짜 구분선 (오늘/어제/전체 날짜)
+- 이전 메시지 로드 (cursor 페이징 + 스크롤 위치 유지)
+- 타이핑 인디케이터 (2초 자동 해제)
+- 메시지 삭제 (soft delete + WebSocket 브로드캐스트)
+- 답장/인용 (replyToMessageId + ReplyMessageDto)
+- 이미지 인라인 미리보기 (MIME 타입 감지)
+- 실시간 안읽은 수 업데이트 (WebSocket → Layout 배지)
+- 브라우저 Push 알림 (탭 비활성 시)
+
+---
+
+## AI 에이전트 상세
+
+### 개요
+다중턴 대화 기반 AI 어시스턴트. 사용자의 캘린더/이메일/드라이브/채팅 데이터를 병렬 수집하여 컨텍스트 기반 응답 생성.
+
+### 아키텍처
+```
+사용자 질문
+  ↓
+AgentService.chat()
+  ├→ AgentContextCollector (병렬 4스레드)
+  │   ├→ Calendar: /api/integrations/calendar/events?days=2
+  │   ├→ Email: /api/integrations/gmail/messages/recent?max=10
+  │   ├→ Drive: /api/integrations/drive/files?max=5
+  │   └→ Chat: ChatServiceClient → /api/chat/rooms
+  ├→ AgentContextPreprocessor (관련성 필터링, 3000자/소스, 총 12000자)
+  ├→ AgentPromptBuilder (시스템 + 컨텍스트 + 히스토리 + 질문)
+  └→ LlmRouter.route("agent", prompt) → Gemini / Ollama
+```
+
+### 엔티티
+- **ConversationHistory**: userId, title (첫 메시지 자동), isActive
+- **ConversationMessage**: role (user/assistant), content, contextSources, model, processingTimeMs
+
+### REST API
+```
+POST   /api/ai/agent/chat                    → 메시지 전송
+GET    /api/ai/agent/conversations            → 대화 목록
+GET    /api/ai/agent/conversations/{id}       → 대화 상세 (메시지 포함)
+DELETE /api/ai/agent/conversations/{id}       → 대화 삭제 (soft)
+```
+
+---
+
+## Frontend 현황
+
+### 페이지 구조
+```
+/login              → Google OAuth 로그인
+/onboarding         → 초기 설정
+/dashboard          → 오늘의 브리핑 + 일정 + 이메일
+/briefings          → 브리핑 목록
+/briefing/:id       → 브리핑 상세 (SSE)
+/calendar           → 캘린더 (Google + Local)
+/chat               → 채팅방 목록 + 메시지
+/chat/:roomId       → 특정 채팅방
+/agent              → AI 어시스턴트
+/agent/:convId      → 특정 대화
+/admin              → 사용자 관리 (관리자 전용)
+```
+
+### 핵심 아키텍처
+- **WebSocketContext**: STOMP 클라이언트 글로벌 관리 (자동 재연결, 알림 구독)
+- **ChatToast**: WebSocket 알림 수신 → Toast + 브라우저 Push
+- **useWebSocket**: Context 래퍼 훅 (subscribe/publish/addNotificationListener)
+
+### 주요 컴포넌트
+| 영역 | 컴포넌트 |
+|------|---------|
+| 레이아웃 | Layout, Header |
+| 채팅 | ChatPage, ChatRoomList, ChatMessageArea, ChatInput, ChatCreateModal, ChatToast |
+| 에이전트 | AgentPage, AgentSidebar, AgentChatArea, AgentInput |
+| 대시보드 | DashboardPage, BriefingCard, CalendarWidget, EmailList |
+| 캘린더 | CalendarPage, EventCreateModal |
+
+---
+
+## Day별 상세 가이드
+
+### Day 7: common 모듈 보강
+
+**목표**: GlobalExceptionHandler, 유틸리티 클래스 추가
+
+1. `GlobalExceptionHandler.java` — BusinessException, Validation, 500 에러 처리
+2. `DateTimeUtil.java` — 날짜/시간 유틸
+3. `JpaConfig.java` — JPA Auditing 공통 설정
 4. common 모듈 단위 테스트
 
 ---
 
-## Day 8-9: user-service
+### Day 8-9: user-service
 
-### 목표
-Google OAuth2 로그인 → JWT 발급 → 사용자 관리 → 온보딩 API
+**목표**: Google OAuth2 로그인 → JWT → 사용자 관리 → 온보딩 → 관리자 승인 → 이메일 인증
 
-### Day 8 작업
-
-1. **User 엔티티**
-```
-user-service/src/main/java/com/workcopilot/user/entity/User.java
-- BaseEntity 상속
-- email (unique, not null)
-- name
-- profileImageUrl
-- googleId (unique)
-- role (enum: USER, ADMIN)
-- onboardingCompleted (boolean, default false)
-- settings (JSON → UserSettings)
-```
-
-2. **UserSettings (JSON 필드)**
-```
-user-service/src/main/java/com/workcopilot/user/entity/UserSettings.java
-- monitoredCalendarIds (List<String>, 기본: ["primary"])
-- monitoredDriveFolderIds (List<String>, 기본: ["root"])
-- importantDomains (List<String>)
-- excludeLabels (List<String>, 기본: ["PROMOTIONS", "SOCIAL"])
-- workStartTime (String, 기본: "09:00")
-- workEndTime (String, 기본: "18:00")
-- language (String, 기본: "ko")
-- timezone (String, 기본: "Asia/Seoul")
-- static defaults() 팩토리 메서드
-```
-
-3. **UserRepository**
-```
-findByEmail(String email) → Optional<User>
-findByGoogleId(String googleId) → Optional<User>
-existsByEmail(String email) → boolean
-```
-
-4. **SecurityConfig**
-```
-- OAuth2 로그인 설정
-- JWT 필터 등록
-- 공개 경로: /api/auth/**, /login/oauth2/**, /h2-console/**
-- 나머지: 인증 필요
-- CORS 설정
-- CSRF 비활성화 (REST API)
-```
-
-5. **JwtProvider**
-```
-- generateAccessToken(User user) → String
-- generateRefreshToken(User user) → String
-- validateToken(String token) → boolean
-- getUserIdFromToken(String token) → Long
-- 설정: jwt.secret, jwt.access-token-expiry, jwt.refresh-token-expiry
-```
-
-### Day 9 작업
-
-6. **OAuth2SuccessHandler**
-```
-- Google 로그인 성공 시 호출
-- User 엔티티 조회 또는 신규 생성
-- Access Token + Refresh Token 발급
-- 프론트엔드로 리다이렉트 (토큰 포함)
-```
-
-7. **JwtAuthenticationFilter**
-```
-- OncePerRequestFilter 상속
-- Authorization: Bearer {token} 헤더에서 토큰 추출
-- 토큰 검증 → SecurityContext에 인증 정보 설정
-```
-
-8. **UserService + UserController**
-```
-GET  /api/users/me          → 현재 로그인 사용자 정보
-PUT  /api/users/me/settings  → 설정 변경
-POST /api/users/me/onboarding → 온보딩 완료
-```
-
-9. **DTO (record)**
-```
-UserResponse, UpdateSettingsRequest, OnboardingRequest
-```
-
-10. **테스트**
-```
-UserServiceTest, JwtProviderTest, UserControllerTest
-```
+- User 엔티티 (BaseEntity, email, googleId, role, status, settings JSON)
+- SecurityConfig, JwtProvider, OAuth2SuccessHandler, JwtAuthenticationFilter
+- UserService + UserController (me, settings, onboarding)
+- 관리자 승인 가입 플로우 (PENDING_APPROVAL → ACTIVE)
+- Redis 기반 이메일 인증 코드
+- AOP Audit Logging (@Audited)
 
 ---
 
-## Day 10: integration-service — Google Calendar
+### Day 10-12: integration-service
 
-### 목표
-Google Calendar API 연동, 일정 조회
+**목표**: Google Calendar + Gmail + Drive API 연동
 
-### 작업
-1. `GoogleTokenService` — Access Token 관리 (갱신 포함)
-2. `CalendarService` — Calendar API 호출
-   - getUpcomingEvents(userId, days) → 향후 N일 일정
-   - getTodayEvents(userId) → 오늘 일정
-   - getEventById(userId, eventId) → 단건 조회
-3. `CalendarEventDto` — 일정 DTO (시작/종료 시간, 제목, 참석자, 위치)
-4. `CalendarController`
-   - GET /api/integrations/calendar/events?days=7
-   - GET /api/integrations/calendar/events/today
-5. 테스트 (Mock Google API)
+- GoogleTokenService (Access Token 관리/갱신)
+- CalendarService + CalendarController (일정 조회/생성, 팀 필터링)
+- GmailService + GmailController (이메일 조회, 중요 필터)
+- DriveService + DriveController (파일 조회/내용 추출)
+- DataCollectorService (Calendar + Gmail + Drive 종합 수집)
+- CalendarSource enum (GOOGLE/LOCAL/BOTH) — 캘린더 이중 운영
 
 ---
 
-## Day 11: integration-service — Gmail
+### Day 13-14: ai-router-service
 
-### 목표
-Gmail API 연동, 이메일 조회 + 요약
+**목표**: LLM 라우팅 + RAG 파이프라인
 
-### 작업
-1. `GmailService`
-   - getRecentEmails(userId, maxResults) → 최근 이메일 목록
-   - getImportantEmails(userId) → 중요 이메일 (importantDomains 필터)
-   - getEmailById(userId, messageId) → 단건 (본문 포함)
-2. `EmailDto` — 이메일 DTO (발신자, 제목, 본문 snippet, 날짜, 라벨)
-3. `GmailController`
-   - GET /api/integrations/gmail/messages?max=20
-   - GET /api/integrations/gmail/messages/important
-4. 테스트
+- LlmRouter (작업별 모델 선택: Gemini → Ollama 폴백)
+- LlmService (Spring AI ChatModel 래핑)
+- EmbeddingService (nomic-embed-text)
+- VectorStoreService (Milvus 연동 예정)
+- AiController (chat, classify, summarize)
 
 ---
 
-## Day 12: integration-service — Google Drive + 통합
+### Day 15-16: briefing-service
 
-### 목표
-Google Drive API 연동, 최근 문서 조회
+**목표**: 일일 브리핑 생성 + SSE 스트리밍
 
-### 작업
-1. `DriveService`
-   - getRecentFiles(userId, maxResults) → 최근 수정된 파일
-   - getFileContent(userId, fileId) → 파일 내용 (텍스트 추출)
-2. `DriveFileDto` — 파일 DTO (이름, MIME 타입, 수정 시간, 소유자)
-3. `DriveController`
-   - GET /api/integrations/drive/files?max=20
-4. integration-service 전체 통합 테스트
-5. `DataCollectorService` — Calendar + Gmail + Drive 데이터를 종합 수집하는 퍼사드
+- Briefing 엔티티 (DAILY/MEETING/ADHOC, 상태 관리)
+- BriefingGenerator (데이터 수집 → LLM 호출 → 저장)
+- SseService (Server-Sent Events 실시간 스트리밍)
+- BriefingController (daily, 조회, stream, history)
 
 ---
 
-## Day 13-14: ai-router-service
+### Day 17: gateway
 
-### 목표
-LLM 라우팅, 임베딩 생성, RAG 파이프라인
+**목표**: API Gateway + JWT 검증 + CORS
 
-### Day 13 작업
-1. `LlmRouter` — 작업 유형별 모델 선택
-   - CLASSIFICATION → Ollama (Llama 3.1 8B)
-   - BRIEFING → OpenAI (GPT-4o)
-   - SUMMARIZATION → Anthropic (Claude Sonnet)
-2. `LlmService` — Spring AI ChatModel 래핑
-   - chat(prompt, modelType) → String
-   - chatWithFunctions(prompt, functions) → StructuredResponse
-3. `EmbeddingService` — nomic-embed-text로 임베딩 생성
-4. Config: 각 모델별 Spring AI 설정
-
-### Day 14 작업
-5. `VectorStoreService` — Milvus 연동
-   - store(documents) → 벡터 저장
-   - search(query, topK) → 유사 문서 검색
-6. `RagService` — RAG 파이프라인
-   - 질문 → 임베딩 → 유사 문서 검색 → 컨텍스트와 함께 LLM 호출
-7. `AiController`
-   - POST /api/ai/chat
-   - POST /api/ai/classify
-   - POST /api/ai/summarize
-8. 테스트 (Mock LLM 응답)
+- JwtAuthGatewayFilter, CorsConfig
+- Route 설정 (user/integration/ai/briefing/chat + WebSocket)
 
 ---
 
-## Day 15-16: briefing-service
+### Day 18: frontend
 
-### 목표
-일일 브리핑 생성, SSE 스트리밍
+**목표**: React 대시보드 + 온보딩 + 캘린더 + 관리자 페이지
 
-### Day 15 작업
-1. `Briefing` 엔티티 (BaseEntity 상속)
-   - userId, briefingType (DAILY/MEETING/ADHOC)
-   - content (TEXT), summary
-   - status (PENDING/GENERATING/COMPLETED/FAILED)
-2. `BriefingRepository`
-3. `BriefingGenerator` — 데이터 수집 → LLM 호출 → 브리핑 생성
-   - collectData(userId) → integration-service 호출
-   - generateBriefing(data) → ai-router-service 호출
-   - saveBriefing(briefing) → DB 저장
-4. Kafka Consumer — BriefingRequestedEvent 수신 시 브리핑 생성
-
-### Day 16 작업
-5. `SseService` — Server-Sent Events 스트리밍
-   - 브리핑 생성 중 실시간 진행 상황 전송
-   - LLM 응답을 토큰 단위로 스트리밍
-6. `BriefingController`
-   - POST /api/briefings/daily → 일일 브리핑 요청
-   - GET /api/briefings/{id} → 브리핑 조회
-   - GET /api/briefings/{id}/stream → SSE 스트리밍
-   - GET /api/briefings/history → 브리핑 이력
-7. 테스트
+- Vite + React 18 + TailwindCSS 4
+- 페이지: Login, Onboarding, Dashboard, Briefing, Calendar, Admin
+- axios + JWT 토큰 관리, 다크모드
 
 ---
 
-## Day 17: gateway
+### Day 22-23: CI/CD + 인프라
 
-### 목표
-API Gateway 설정, JWT 검증 필터, Rate Limiting
-
-### 작업
-1. `JwtAuthGatewayFilter` — Gateway에서 JWT 검증
-2. `RateLimitConfig` — Redis 기반 Rate Limiting
-3. `CorsConfig` — CORS 설정
-4. Route 설정 검증 (각 서비스로 정상 라우팅 확인)
-5. 테스트
+- 각 서비스 Dockerfile (멀티스테이지 빌드)
+- K8s manifests (deployment + service)
+- GitHub Actions CD (main push → 빌드 → Docker 이미지 → K8s 태그 갱신)
+- kustomization.yaml로 이미지 태그 관리
 
 ---
 
-## Day 18: frontend
+### Phase 4: MySQL 통일 + Gemini
 
-### 목표
-React 대시보드 + 온보딩 UI
-
-### 작업
-1. Vite + React 18 + TailwindCSS 4 프로젝트 생성
-2. 페이지:
-   - `/login` — Google 로그인 버튼
-   - `/onboarding` — 설정 선택 (캘린더, 근무 시간 등)
-   - `/dashboard` — 오늘의 브리핑 + 일정 + 이메일 요약
-   - `/briefing/:id` — 브리핑 상세 (SSE 스트리밍)
-3. 컴포넌트: Header, BriefingCard, CalendarWidget, EmailList
-4. API 연동: axios + JWT 토큰 관리
+- H2/PostgreSQL → MySQL 8.0 전환 (5개 분리 DB)
+- Docker Compose 로컬 개발 환경 구축
+- `scripts/init-databases.sql` 자동 초기화
+- Gemini 2.5 Flash LLM 연동 (GEMINI_API_KEY)
+- EmailDto isRead 필드 추가
+- 브리핑 프롬프트 개선
 
 ---
 
-## Day 19-20: AI 레이어 최적화
+### Phase 5: chat-service + AI 에이전트
 
-### 작업
-1. 프롬프트 튜닝 — 브리핑 품질 개선
-2. 응답 캐싱 — Redis에 동일 요청 캐싱
-3. 비용 최적화 — 로컬 LLM 활용 극대화
-4. 프롬프트 템플릿 관리
-
----
-
-## Day 21: 통합 테스트
-
-### 작업
-1. 전체 플로우 테스트: 로그인 → 데이터 수집 → 브리핑 생성
-2. 서비스 간 통신 테스트
-3. 에러 시나리오 테스트
+- chat-service 모듈 신규 구축 (엔티티, WebSocket, REST, 파일 업로드)
+- AI 에이전트 (AgentService, AgentContextCollector, AgentPromptBuilder)
+- ConversationHistory/Message 엔티티
+- K8s deployment + service + CD 파이프라인 추가
+- Gateway 라우트 추가 (REST + WebSocket)
+- Frontend: ChatPage, AgentPage + 관련 컴포넌트
 
 ---
 
-## Day 22-23: 인프라
+### Phase 6: 채팅 고도화
 
-### 작업
-1. 각 서비스 Dockerfile 작성
-2. Helm Chart 작성
-3. GitHub Actions CI/CD
-4. Grafana + Prometheus 모니터링
+**Phase A (핵심 UX):**
+- WebSocket Context Provider (글로벌 연결)
+- ChatToast (다른 페이지 알림)
+- 날짜 구분선, Load More, 타이핑 인디케이터
 
----
+**Phase B (메시지 기능):**
+- 메시지 삭제 (soft delete + WebSocket 이벤트)
+- 답장/인용 (replyToMessageId)
+- 이미지 인라인 미리보기
+- 실시간 Unread 업데이트 (Layout 배지)
+- 브라우저 Push 알림
 
-## Day 24-25: 마무리
-
-### 작업
-1. README.md 작성 (프로젝트 소개, 아키텍처, 실행 방법)
-2. API 문서 정리 (api-documenter 에이전트 활용)
-3. 데모 시나리오 준비 + 스크린샷
-4. GitHub 레포 정리 (라벨, 이슈, 마일스톤)
+**Phase C (예정):**
+- 메시지 수정 (editedAt, 5분 제한)
+- 리액션/이모지 (ChatReaction 엔티티)
+- 드래그 앤 드롭 파일 업로드
+- 메시지 검색
+- 접속 상태 (Presence)
+- @멘션
