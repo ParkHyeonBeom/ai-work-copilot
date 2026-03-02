@@ -1,0 +1,161 @@
+package com.workcopilot.chat.websocket;
+
+import com.workcopilot.chat.dto.ChatMessageDto;
+import com.workcopilot.chat.dto.SendMessageRequest;
+import com.workcopilot.chat.entity.ChatParticipant;
+import com.workcopilot.chat.entity.ChatRoom;
+import com.workcopilot.chat.repository.ChatParticipantRepository;
+import com.workcopilot.chat.repository.ChatRoomRepository;
+import com.workcopilot.chat.service.ChatMessageService;
+import com.workcopilot.common.exception.BusinessException;
+import com.workcopilot.common.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Controller;
+
+import java.util.List;
+import java.util.Map;
+
+@Controller
+@RequiredArgsConstructor
+@Slf4j
+public class ChatWebSocketHandler {
+
+    private final ChatMessageService chatMessageService;
+    private final ChatParticipantRepository chatParticipantRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    @MessageMapping("/chat.send/{roomId}")
+    public void sendMessage(@DestinationVariable Long roomId,
+                            @Payload SendMessageRequest request,
+                            SimpMessageHeaderAccessor headerAccessor) {
+        StompPrincipal principal = (StompPrincipal) headerAccessor.getUser();
+        if (principal == null) {
+            throw new IllegalStateException("인증되지 않은 사용자입니다.");
+        }
+
+        Long userId = principal.getUserId();
+        String userName = principal.getUserName();
+
+        if (!chatParticipantRepository.existsByChatRoomIdAndUserId(roomId, userId)) {
+            throw new BusinessException(ErrorCode.CHAT_NOT_PARTICIPANT);
+        }
+
+        ChatMessageDto messageDto = chatMessageService.saveMessage(roomId, userId, userName, request);
+
+        // Broadcast to room subscribers
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, messageDto);
+
+        // Get room name (eager, no lazy issue)
+        String roomName = chatRoomRepository.findById(roomId)
+                .map(r -> r.getName() != null ? r.getName() : "채팅")
+                .orElse("채팅");
+
+        // Get participants once, reuse for both notifications and unread updates
+        List<ChatParticipant> participants = chatParticipantRepository.findByChatRoomId(roomId);
+
+        // Send notifications + unread updates to all participants except sender
+        sendNotifications(roomId, userId, userName, roomName, messageDto, participants);
+        sendUnreadUpdates(roomId, userId, participants);
+
+        log.debug("WebSocket 메시지 전송: roomId={}, sender={}", roomId, userId);
+    }
+
+    @MessageMapping("/chat.delete/{roomId}")
+    public void deleteMessage(@DestinationVariable Long roomId,
+                              @Payload Map<String, Long> payload,
+                              SimpMessageHeaderAccessor headerAccessor) {
+        StompPrincipal principal = (StompPrincipal) headerAccessor.getUser();
+        if (principal == null) {
+            throw new IllegalStateException("인증되지 않은 사용자입니다.");
+        }
+
+        Long userId = principal.getUserId();
+        Long messageId = payload.get("messageId");
+
+        ChatMessageDto deletedDto = chatMessageService.deleteMessage(userId, messageId);
+
+        Map<String, Object> deleteEvent = Map.of(
+                "type", "DELETED",
+                "messageId", messageId,
+                "message", deletedDto
+        );
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, deleteEvent);
+
+        log.debug("메시지 삭제 이벤트: roomId={}, messageId={}", roomId, messageId);
+    }
+
+    @MessageMapping("/chat.typing/{roomId}")
+    public void typingIndicator(@DestinationVariable Long roomId,
+                                 SimpMessageHeaderAccessor headerAccessor) {
+        StompPrincipal principal = (StompPrincipal) headerAccessor.getUser();
+        if (principal == null) {
+            return;
+        }
+
+        Long userId = principal.getUserId();
+        String userName = principal.getUserName();
+
+        Map<String, Object> typingEvent = Map.of(
+                "userId", userId,
+                "userName", userName != null ? userName : "User",
+                "typing", true
+        );
+
+        messagingTemplate.convertAndSend("/topic/room/" + roomId + "/typing", typingEvent);
+    }
+
+    private void sendNotifications(Long roomId, Long senderId, String senderName,
+                                    String roomName, ChatMessageDto messageDto,
+                                    List<ChatParticipant> participants) {
+        String preview = messageDto.content();
+        if (preview != null && preview.length() > 50) {
+            preview = preview.substring(0, 50) + "...";
+        }
+
+        for (ChatParticipant participant : participants) {
+            if (participant.getUserId().equals(senderId)) {
+                continue;
+            }
+
+            Map<String, Object> notification = Map.of(
+                    "type", "NEW_MESSAGE",
+                    "roomId", roomId,
+                    "roomName", roomName,
+                    "senderName", senderName != null ? senderName : "User",
+                    "preview", preview != null ? preview : ""
+            );
+
+            messagingTemplate.convertAndSendToUser(
+                    String.valueOf(participant.getUserId()),
+                    "/queue/notifications",
+                    notification
+            );
+        }
+    }
+
+    private void sendUnreadUpdates(Long roomId, Long senderId, List<ChatParticipant> participants) {
+        for (ChatParticipant participant : participants) {
+            if (participant.getUserId().equals(senderId)) {
+                continue;
+            }
+
+            Map<String, Object> unreadEvent = Map.of(
+                    "type", "UNREAD_UPDATE",
+                    "roomId", roomId
+            );
+
+            messagingTemplate.convertAndSendToUser(
+                    String.valueOf(participant.getUserId()),
+                    "/queue/notifications",
+                    unreadEvent
+            );
+        }
+    }
+}

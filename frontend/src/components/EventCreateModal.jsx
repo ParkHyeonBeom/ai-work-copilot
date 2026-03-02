@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import UserMentionInput from './UserMentionInput';
 
+const sourceOptions = [
+  { value: 'GOOGLE', label: 'Google Calendar', desc: 'Google Calendar에 생성' },
+  { value: 'LOCAL', label: '사내 캘린더', desc: '사내 DB에만 저장' },
+  { value: 'BOTH', label: '둘 다', desc: 'Google + 사내 캘린더 모두 생성' },
+];
+
 export default function EventCreateModal({ isOpen, onClose, onSubmit, initialDate }) {
   const [form, setForm] = useState({
     title: '',
@@ -9,6 +15,7 @@ export default function EventCreateModal({ isOpen, onClose, onSubmit, initialDat
     endTime: '',
     location: '',
     isAllDay: false,
+    source: 'GOOGLE',
   });
   const [selectedAttendees, setSelectedAttendees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -23,6 +30,7 @@ export default function EventCreateModal({ isOpen, onClose, onSubmit, initialDat
         endTime: initialDate ? `${initialDate}T10:00` : '',
         location: '',
         isAllDay: false,
+        source: 'GOOGLE',
       });
       setSelectedAttendees([]);
       setError('');
@@ -59,6 +67,7 @@ export default function EventCreateModal({ isOpen, onClose, onSubmit, initialDat
         location: form.location || null,
         attendeeEmails: selectedAttendees.map((u) => u.email),
         isAllDay: form.isAllDay,
+        source: form.source,
       };
       await onSubmit(payload);
       onClose();
@@ -86,12 +95,35 @@ export default function EventCreateModal({ isOpen, onClose, onSubmit, initialDat
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
           {error && (
             <div className="px-3 py-2 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               {error}
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">캘린더 선택</label>
+            <div className="grid grid-cols-3 gap-2">
+              {sourceOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, source: opt.value }))}
+                  className={`px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                    form.source === opt.value
+                      ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-300 dark:border-primary-500/30 text-primary-600 dark:text-primary-400'
+                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              {sourceOptions.find((o) => o.value === form.source)?.desc}
+            </p>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">제목 *</label>

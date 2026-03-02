@@ -55,7 +55,7 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your-client-id}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-your-client-secret}
       OAUTH_REDIRECT_BASE_URL: http://localhost:5173
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@workcopilot.com}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-gusqja0213@gmail.com}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
     depends_on:
@@ -105,14 +105,10 @@ services:
       DB_USERNAME: ${MYSQL_USER:-workcopilot}
       DB_PASSWORD: ${MYSQL_PASSWORD:-workcopilot_local}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      OLLAMA_ENABLED: ${OLLAMA_ENABLED:-true}
-      ANTHROPIC_ENABLED: ${ANTHROPIC_ENABLED:-false}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-dummy}
-      GEMINI_ENABLED: ${GEMINI_ENABLED:-false}
+      GEMINI_ENABLED: ${GEMINI_ENABLED:-true}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       INTEGRATION_SERVICE_URL: http://integration-service:8082
+      CHAT_SERVICE_URL: http://chat-service:8085
     depends_on:
       mysql:
         condition: service_healthy
@@ -142,6 +138,30 @@ services:
     networks:
       - workcopilot
 
+  chat-service:
+    build:
+      context: ./chat-service/target
+      dockerfile: ../Dockerfile
+    container_name: workcopilot-chat-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: workcopilot_chat
+      DB_USERNAME: ${MYSQL_USER:-workcopilot}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-workcopilot_local}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
+      CHAT_FILE_DIR: /data/chat-files
+    volumes:
+      - chat-files:/data/chat-files
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - workcopilot
+
   gateway:
     build:
       context: ./gateway/target
@@ -156,11 +176,14 @@ services:
       INTEGRATION_SERVICE_URL: http://integration-service:8082
       AI_ROUTER_SERVICE_URL: http://ai-router-service:8083
       BRIEFING_SERVICE_URL: http://briefing-service:8084
+      CHAT_SERVICE_URL: http://chat-service:8085
+      CHAT_SERVICE_WS_URL: ws://chat-service:8085
     depends_on:
       - user-service
       - integration-service
       - ai-router-service
       - briefing-service
+      - chat-service
     networks:
       - workcopilot
 
@@ -178,6 +201,7 @@ services:
 
 volumes:
   mysql-data:
+  chat-files:
 
 networks:
   workcopilot:

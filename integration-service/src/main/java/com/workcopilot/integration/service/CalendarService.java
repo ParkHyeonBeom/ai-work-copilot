@@ -18,12 +18,14 @@ import com.workcopilot.integration.client.UserNotificationClient;
 import com.workcopilot.integration.dto.CalendarEventDto;
 import com.workcopilot.integration.dto.CreateEventRequest;
 import com.workcopilot.integration.entity.CalendarEvent;
+import com.workcopilot.integration.entity.CalendarSource;
 import com.workcopilot.integration.google.GoogleCredentialProvider;
 import com.workcopilot.integration.repository.CalendarEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -31,9 +33,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -58,7 +58,7 @@ public class CalendarService {
         LocalDateTime startOfDay = DateTimeUtil.startOfDay(today);
         LocalDateTime endOfDay = DateTimeUtil.endOfDay(today);
 
-        return getEvents(userId, startOfDay, endOfDay);
+        return getMergedEvents(userId, startOfDay, endOfDay);
     }
 
     @Audited(action = AuditAction.CALENDAR_ACCESSED)
@@ -69,13 +69,161 @@ public class CalendarService {
         LocalDateTime start = DateTimeUtil.startOfDay(today);
         LocalDateTime end = DateTimeUtil.endOfDay(today.plusDays(days));
 
-        return getEvents(userId, start, end);
+        return getMergedEvents(userId, start, end);
     }
 
     @Audited(action = AuditAction.CALENDAR_CREATED)
+    @Transactional
     public CalendarEventDto createEvent(Long userId, CreateEventRequest request) {
-        log.info("일정 생성: userId={}, title={}", userId, request.title());
+        log.info("일정 생성: userId={}, title={}, source={}", userId, request.title(), request.source());
 
+        CalendarSource source = request.source();
+
+        if (source == CalendarSource.GOOGLE || source == CalendarSource.BOTH) {
+            return createGoogleAndLocalEvent(userId, request, source);
+        } else {
+            return createLocalOnlyEvent(userId, request);
+        }
+    }
+
+    @Audited(action = AuditAction.CALENDAR_ACCESSED)
+    public List<CalendarEventDto> getEventsByRange(Long userId, LocalDateTime start, LocalDateTime end) {
+        log.info("범위 일정 조회: userId={}, start={}, end={}", userId, start, end);
+        return getMergedEvents(userId, start, end);
+    }
+
+    public List<CalendarEventDto> getTeamEvents(Long userId, String role, LocalDateTime start, LocalDateTime end) {
+        log.info("팀 일정 조회: userId={}, role={}, start={}, end={}", userId, role, start, end);
+
+        List<CalendarEvent> events;
+        if ("ADMIN".equals(role)) {
+            events = calendarEventRepository.findByStartTimeBetweenOrderByStartTimeAsc(start, end);
+        } else {
+            Map<String, Object> userInfo = userInfoClient.getUserInfo(userId);
+            String department = userInfo != null ? (String) userInfo.get("department") : null;
+            String email = userInfo != null ? (String) userInfo.get("email") : null;
+
+            if (department != null) {
+                events = calendarEventRepository
+                        .findByCreatorDepartmentAndStartTimeBetweenOrderByStartTimeAsc(department, start, end);
+            } else {
+                events = Collections.emptyList();
+            }
+
+            if (email != null) {
+                List<CalendarEvent> allEvents = calendarEventRepository
+                        .findByStartTimeBetweenOrderByStartTimeAsc(start, end);
+                List<CalendarEvent> deptEvents = events;
+                List<CalendarEvent> attendeeEvents = allEvents.stream()
+                        .filter(e -> e.getAttendeeEmails() != null && e.getAttendeeEmails().contains(email))
+                        .filter(e -> !deptEvents.contains(e))
+                        .toList();
+                events = new ArrayList<>(events);
+                events.addAll(attendeeEvents);
+                events.sort(Comparator.comparing(CalendarEvent::getStartTime));
+            }
+        }
+
+        log.info("팀 일정 조회 완료: userId={}, count={}", userId, events.size());
+        return events.stream().map(this::convertLocalToDto).toList();
+    }
+
+    public CalendarEventDto getEventById(Long userId, String eventId) {
+        log.info("일정 상세 조회: userId={}, eventId={}", userId, eventId);
+
+        try {
+            Calendar calendar = buildCalendarService(userId);
+            Event event = calendar.events().get("primary", eventId).execute();
+            return convertToDto(event);
+        } catch (IOException e) {
+            log.error("Google Calendar API 호출 실패: userId={}, eventId={}, error={}",
+                    userId, eventId, e.getMessage());
+            throw new BusinessException(ErrorCode.GOOGLE_API_ERROR,
+                    "일정 조회에 실패했습니다: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public CalendarEventDto updateEvent(Long userId, Long eventId, CreateEventRequest request) {
+        log.info("일정 수정: userId={}, eventId={}", userId, eventId);
+
+        CalendarEvent event = calendarEventRepository.findByIdAndCreatorUserId(eventId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "일정을 찾을 수 없습니다."));
+
+        event.update(request.title(), request.description(), request.startTime(), request.endTime(),
+                request.location(), request.isAllDay(), request.attendeeEmails());
+
+        return convertLocalToDto(event);
+    }
+
+    @Transactional
+    public void deleteEvent(Long userId, Long eventId) {
+        log.info("일정 삭제: userId={}, eventId={}", userId, eventId);
+
+        CalendarEvent event = calendarEventRepository.findByIdAndCreatorUserId(eventId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "일정을 찾을 수 없습니다."));
+
+        calendarEventRepository.delete(event);
+    }
+
+    /**
+     * Google Calendar + 로컬 DB 이벤트를 병합하여 반환 (googleEventId 기준 중복 제거)
+     */
+    private List<CalendarEventDto> getMergedEvents(Long userId, LocalDateTime start, LocalDateTime end) {
+        List<CalendarEventDto> googleEvents = getGoogleEvents(userId, start, end);
+        List<CalendarEvent> localEvents = calendarEventRepository
+                .findByCreatorUserIdAndStartTimeBetweenOrderByStartTimeAsc(userId, start, end);
+
+        Set<String> googleEventIds = googleEvents.stream()
+                .map(CalendarEventDto::id)
+                .collect(Collectors.toSet());
+
+        List<CalendarEventDto> localOnlyEvents = localEvents.stream()
+                .filter(e -> e.getGoogleEventId() == null || !googleEventIds.contains(e.getGoogleEventId()))
+                .map(this::convertLocalToDto)
+                .toList();
+
+        List<CalendarEventDto> merged = new ArrayList<>(googleEvents);
+        merged.addAll(localOnlyEvents);
+        merged.sort(Comparator.comparing(CalendarEventDto::startTime));
+
+        log.info("병합 일정 조회 완료: userId={}, google={}, localOnly={}, total={}",
+                userId, googleEvents.size(), localOnlyEvents.size(), merged.size());
+        return merged;
+    }
+
+    private List<CalendarEventDto> getGoogleEvents(Long userId, LocalDateTime start, LocalDateTime end) {
+        try {
+            Calendar calendar = buildCalendarService(userId);
+
+            ZoneId zone = DateTimeUtil.getDefaultZone();
+            DateTime timeMin = new DateTime(start.atZone(zone).toInstant().toEpochMilli());
+            DateTime timeMax = new DateTime(end.atZone(zone).toInstant().toEpochMilli());
+
+            Events events = calendar.events().list("primary")
+                    .setTimeMin(timeMin)
+                    .setTimeMax(timeMax)
+                    .setOrderBy("startTime")
+                    .setSingleEvents(true)
+                    .setMaxResults(50)
+                    .execute();
+
+            List<Event> items = events.getItems();
+            if (items == null || items.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            return items.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+
+        } catch (IOException e) {
+            log.warn("Google Calendar API 호출 실패, 로컬 이벤트만 반환: userId={}, error={}", userId, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private CalendarEventDto createGoogleAndLocalEvent(Long userId, CreateEventRequest request, CalendarSource source) {
         try {
             Calendar calendar = buildCalendarService(userId);
             ZoneId zone = DateTimeUtil.getDefaultZone();
@@ -109,10 +257,8 @@ public class CalendarService {
             Event created = calendar.events().insert("primary", event).execute();
             log.info("Google Calendar 일정 생성 완료: userId={}, eventId={}", userId, created.getId());
 
-            // 로컬 DB에 일정 저장
-            saveToLocalDb(userId, request, created.getId());
+            saveToLocalDb(userId, request, created.getId(), source);
 
-            // 참석자 알림 발송 (실패 시 무시)
             String meetingTime = request.startTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
             userNotificationClient.sendMeetingNotification(
                     userId, request.title(), meetingTime, request.location(), request.attendeeEmails());
@@ -126,125 +272,38 @@ public class CalendarService {
         }
     }
 
-    @Audited(action = AuditAction.CALENDAR_ACCESSED)
-    public List<CalendarEventDto> getEventsByRange(Long userId, LocalDateTime start, LocalDateTime end) {
-        log.info("범위 일정 조회: userId={}, start={}, end={}", userId, start, end);
-        return getEvents(userId, start, end);
+    private CalendarEventDto createLocalOnlyEvent(Long userId, CreateEventRequest request) {
+        CalendarEvent saved = saveToLocalDb(userId, request, null, CalendarSource.LOCAL);
+        log.info("사내 캘린더 일정 생성 완료: userId={}, eventId={}", userId, saved.getId());
+
+        String meetingTime = request.startTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        userNotificationClient.sendMeetingNotification(
+                userId, request.title(), meetingTime, request.location(), request.attendeeEmails());
+
+        return convertLocalToDto(saved);
     }
 
-    public List<CalendarEventDto> getTeamEvents(Long userId, String role, LocalDateTime start, LocalDateTime end) {
-        log.info("팀 일정 조회: userId={}, role={}, start={}, end={}", userId, role, start, end);
+    private CalendarEvent saveToLocalDb(Long userId, CreateEventRequest request, String googleEventId, CalendarSource source) {
+        Map<String, Object> userInfo = userInfoClient.getUserInfo(userId);
+        String email = userInfo != null ? (String) userInfo.get("email") : null;
+        String department = userInfo != null ? (String) userInfo.get("department") : null;
 
-        List<CalendarEvent> events;
-        if ("ADMIN".equals(role)) {
-            events = calendarEventRepository.findByStartTimeBetweenOrderByStartTimeAsc(start, end);
-        } else {
-            Map<String, Object> userInfo = userInfoClient.getUserInfo(userId);
-            String department = userInfo != null ? (String) userInfo.get("department") : null;
-            String email = userInfo != null ? (String) userInfo.get("email") : null;
+        CalendarEvent localEvent = CalendarEvent.builder()
+                .creatorUserId(userId)
+                .creatorEmail(email)
+                .creatorDepartment(department)
+                .title(request.title())
+                .description(request.description())
+                .startTime(request.startTime())
+                .endTime(request.endTime())
+                .location(request.location())
+                .isAllDay(request.isAllDay())
+                .attendeeEmails(request.attendeeEmails() != null ? request.attendeeEmails() : List.of())
+                .googleEventId(googleEventId)
+                .source(source)
+                .build();
 
-            if (department != null) {
-                events = calendarEventRepository
-                        .findByCreatorDepartmentAndStartTimeBetweenOrderByStartTimeAsc(department, start, end);
-            } else {
-                events = Collections.emptyList();
-            }
-
-            // 다른 부서지만 본인이 참석자인 일정 추가
-            if (email != null) {
-                List<CalendarEvent> allEvents = calendarEventRepository
-                        .findByStartTimeBetweenOrderByStartTimeAsc(start, end);
-                List<CalendarEvent> deptEvents = events;
-                List<CalendarEvent> attendeeEvents = allEvents.stream()
-                        .filter(e -> e.getAttendeeEmails() != null && e.getAttendeeEmails().contains(email))
-                        .filter(e -> !deptEvents.contains(e))
-                        .toList();
-                events = new java.util.ArrayList<>(events);
-                events.addAll(attendeeEvents);
-                events.sort((a, b) -> a.getStartTime().compareTo(b.getStartTime()));
-            }
-        }
-
-        log.info("팀 일정 조회 완료: userId={}, count={}", userId, events.size());
-        return events.stream().map(this::convertLocalToDto).toList();
-    }
-
-    public CalendarEventDto getEventById(Long userId, String eventId) {
-        log.info("일정 상세 조회: userId={}, eventId={}", userId, eventId);
-
-        try {
-            Calendar calendar = buildCalendarService(userId);
-            Event event = calendar.events().get("primary", eventId).execute();
-            return convertToDto(event);
-        } catch (IOException e) {
-            log.error("Google Calendar API 호출 실패: userId={}, eventId={}, error={}",
-                    userId, eventId, e.getMessage());
-            throw new BusinessException(ErrorCode.GOOGLE_API_ERROR,
-                    "일정 조회에 실패했습니다: " + e.getMessage());
-        }
-    }
-
-    private List<CalendarEventDto> getEvents(Long userId, LocalDateTime start, LocalDateTime end) {
-        try {
-            Calendar calendar = buildCalendarService(userId);
-
-            ZoneId zone = DateTimeUtil.getDefaultZone();
-            DateTime timeMin = new DateTime(start.atZone(zone).toInstant().toEpochMilli());
-            DateTime timeMax = new DateTime(end.atZone(zone).toInstant().toEpochMilli());
-
-            Events events = calendar.events().list("primary")
-                    .setTimeMin(timeMin)
-                    .setTimeMax(timeMax)
-                    .setOrderBy("startTime")
-                    .setSingleEvents(true)
-                    .setMaxResults(50)
-                    .execute();
-
-            List<Event> items = events.getItems();
-            if (items == null || items.isEmpty()) {
-                log.info("조회된 일정 없음: userId={}", userId);
-                return Collections.emptyList();
-            }
-
-            List<CalendarEventDto> result = items.stream()
-                    .map(this::convertToDto)
-                    .collect(Collectors.toList());
-
-            log.info("일정 조회 완료: userId={}, count={}", userId, result.size());
-            return result;
-
-        } catch (IOException e) {
-            log.error("Google Calendar API 호출 실패: userId={}, error={}", userId, e.getMessage());
-            throw new BusinessException(ErrorCode.GOOGLE_API_ERROR,
-                    "일정 목록 조회에 실패했습니다: " + e.getMessage());
-        }
-    }
-
-    private void saveToLocalDb(Long userId, CreateEventRequest request, String googleEventId) {
-        try {
-            Map<String, Object> userInfo = userInfoClient.getUserInfo(userId);
-            String email = userInfo != null ? (String) userInfo.get("email") : null;
-            String department = userInfo != null ? (String) userInfo.get("department") : null;
-
-            CalendarEvent localEvent = CalendarEvent.builder()
-                    .creatorUserId(userId)
-                    .creatorEmail(email)
-                    .creatorDepartment(department)
-                    .title(request.title())
-                    .description(request.description())
-                    .startTime(request.startTime())
-                    .endTime(request.endTime())
-                    .location(request.location())
-                    .isAllDay(request.isAllDay())
-                    .attendeeEmails(request.attendeeEmails() != null ? request.attendeeEmails() : List.of())
-                    .googleEventId(googleEventId)
-                    .build();
-
-            calendarEventRepository.save(localEvent);
-            log.info("로컬 DB 일정 저장 완료: userId={}, googleEventId={}", userId, googleEventId);
-        } catch (Exception e) {
-            log.warn("로컬 DB 일정 저장 실패 (무시): userId={}, error={}", userId, e.getMessage());
-        }
+        return calendarEventRepository.save(localEvent);
     }
 
     private CalendarEventDto convertLocalToDto(CalendarEvent event) {
@@ -256,7 +315,8 @@ public class CalendarService {
                 event.getEndTime(),
                 event.getLocation(),
                 event.getAttendeeEmails() != null ? event.getAttendeeEmails() : Collections.emptyList(),
-                event.isAllDay()
+                event.isAllDay(),
+                event.getSource() != null ? event.getSource().name() : "LOCAL"
         );
     }
 
@@ -303,7 +363,8 @@ public class CalendarService {
                 endTime,
                 event.getLocation(),
                 attendees,
-                isAllDay
+                isAllDay,
+                "GOOGLE"
         );
     }
 }

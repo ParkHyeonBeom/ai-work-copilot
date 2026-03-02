@@ -45,4 +45,20 @@ public class CalendarEvent extends BaseEntity {
     private List<String> attendeeEmails = List.of();
 
     private String googleEventId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    @Builder.Default
+    private CalendarSource source = CalendarSource.GOOGLE;
+
+    public void update(String title, String description, LocalDateTime startTime, LocalDateTime endTime,
+                       String location, boolean isAllDay, List<String> attendeeEmails) {
+        this.title = title;
+        this.description = description;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.location = location;
+        this.isAllDay = isAllDay;
+        this.attendeeEmails = attendeeEmails != null ? attendeeEmails : List.of();
+    }
 }

@@ -38,6 +38,7 @@ jobs:
           cp integration-service/target/integration-service-*.jar integration-service/
           cp ai-router-service/target/ai-router-service-*.jar ai-router-service/
           cp briefing-service/target/briefing-service-*.jar briefing-service/
+          cp chat-service/target/chat-service-*.jar chat-service/
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -71,6 +72,11 @@ jobs:
           docker build -t ghcr.io/parkhyeonbeom/workcopilot-briefing-service:${{ steps.vars.outputs.sha7 }} briefing-service/
           docker push ghcr.io/parkhyeonbeom/workcopilot-briefing-service:${{ steps.vars.outputs.sha7 }}
 
+      - name: Build & Push chat-service
+        run: |
+          docker build -t ghcr.io/parkhyeonbeom/workcopilot-chat-service:${{ steps.vars.outputs.sha7 }} chat-service/
+          docker push ghcr.io/parkhyeonbeom/workcopilot-chat-service:${{ steps.vars.outputs.sha7 }}
+
       - name: Build & Push frontend
         run: |
           docker build -t ghcr.io/parkhyeonbeom/workcopilot-frontend:${{ steps.vars.outputs.sha7 }} frontend/
@@ -88,6 +94,7 @@ jobs:
             ghcr.io/parkhyeonbeom/workcopilot-integration-service=ghcr.io/parkhyeonbeom/workcopilot-integration-service:${{ steps.vars.outputs.sha7 }} \
             ghcr.io/parkhyeonbeom/workcopilot-ai-router-service=ghcr.io/parkhyeonbeom/workcopilot-ai-router-service:${{ steps.vars.outputs.sha7 }} \
             ghcr.io/parkhyeonbeom/workcopilot-briefing-service=ghcr.io/parkhyeonbeom/workcopilot-briefing-service:${{ steps.vars.outputs.sha7 }} \
+            ghcr.io/parkhyeonbeom/workcopilot-chat-service=ghcr.io/parkhyeonbeom/workcopilot-chat-service:${{ steps.vars.outputs.sha7 }} \
             ghcr.io/parkhyeonbeom/workcopilot-frontend=ghcr.io/parkhyeonbeom/workcopilot-frontend:${{ steps.vars.outputs.sha7 }}
 
       - name: Commit and push updated tags

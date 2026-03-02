@@ -66,7 +66,7 @@ jwt:
 
 app:
   frontend-url: http://localhost:5173
-  admin-email: ${ADMIN_EMAIL:admin@workcopilot.com}
+  admin-email: ${ADMIN_EMAIL:gusqja0213@gmail.com}
 
 ---
 spring:
@@ -127,7 +127,7 @@ jwt:
 
 app:
   frontend-url: https://nonnaval-tragicomical-eliana.ngrok-free.dev
-  admin-email: ${ADMIN_EMAIL:admin@workcopilot.com}
+  admin-email: ${ADMIN_EMAIL:gusqja0213@gmail.com}
 
 ---
 spring:

@@ -42,24 +42,18 @@ spec:
                 secretKeyRef:
                   name: jwt-secret
                   key: JWT_SECRET
-            - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: openai-secret
-                  key: OPENAI_API_KEY
-                  optional: true
-            - name: OLLAMA_ENABLED
-              value: "true"
-            - name: OLLAMA_BASE_URL
-              value: "http://100.95.227.98:11434"
             - name: GEMINI_ENABLED
-              value: "${GEMINI_ENABLED:false}"
+              value: "true"
             - name: GEMINI_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: gemini-secret
                   key: GEMINI_API_KEY
                   optional: true
+            - name: INTEGRATION_SERVICE_URL
+              value: "http://integration-service:8082"
+            - name: CHAT_SERVICE_URL
+              value: "http://chat-service:8085"
           resources:
             requests:
               memory: "256Mi"

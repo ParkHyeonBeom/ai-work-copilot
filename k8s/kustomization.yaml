@@ -21,6 +21,8 @@ resources:
 - redis/service.yaml
 - frontend/deployment.yaml
 - frontend/service.yaml
+- chat-service/deployment.yaml
+- chat-service/service.yaml
 
 images:
 - name: ghcr.io/parkhyeonbeom/workcopilot-ai-router-service
@@ -40,4 +42,7 @@ images:
   newTag: ce83d29
 - name: ghcr.io/parkhyeonbeom/workcopilot-user-service
   newName: ghcr.io/parkhyeonbeom/workcopilot-user-service
+  newTag: ce83d29
+- name: ghcr.io/parkhyeonbeom/workcopilot-chat-service
+  newName: ghcr.io/parkhyeonbeom/workcopilot-chat-service
   newTag: ce83d29

@@ -25,6 +25,7 @@
         <module>ai-router-service</module>
         <module>briefing-service</module>
         <module>gateway</module>
+        <module>chat-service</module>
     </modules>
 
     <properties>
@@ -35,7 +36,7 @@
 
         <!-- Spring -->
         <spring-cloud.version>2023.0.4</spring-cloud.version>
-        <spring-ai.version>1.0.0-M4</spring-ai.version>
+        <!-- Spring AI 제거됨 - Gemini REST API 직접 호출 방식으로 전환 -->
 
         <!-- Google -->
         <google-api-client.version>2.7.0</google-api-client.version>
@@ -63,15 +64,6 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
                 <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <!-- Spring AI BOM -->
-            <dependency>
-                <groupId>org.springframework.ai</groupId>
-                <artifactId>spring-ai-bom</artifactId>
-                <version>${spring-ai.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -183,14 +175,4 @@
         </pluginManagement>
     </build>
 
-    <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 </project>

@@ -1,0 +1,62 @@
+server:
+  port: 8085
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+spring:
+  application:
+    name: chat-service
+  profiles:
+    active: local
+
+jwt:
+  secret: ${JWT_SECRET:dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
+
+chat:
+  file-dir: ${CHAT_FILE_DIR:./data/chat-files}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:workcopilot_chat}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:workcopilot}
+    password: ${DB_PASSWORD:workcopilot_local}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: k8s
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  datasource:
+    url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:workcopilot_chat}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:workcopilot}
+    password: ${DB_PASSWORD:workcopilot_local}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect

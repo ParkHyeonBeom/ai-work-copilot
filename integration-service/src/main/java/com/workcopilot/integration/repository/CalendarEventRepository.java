@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Long> {
 
@@ -12,4 +13,9 @@ public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Lo
 
     List<CalendarEvent> findByCreatorDepartmentAndStartTimeBetweenOrderByStartTimeAsc(
             String department, LocalDateTime start, LocalDateTime end);
+
+    List<CalendarEvent> findByCreatorUserIdAndStartTimeBetweenOrderByStartTimeAsc(
+            Long creatorUserId, LocalDateTime start, LocalDateTime end);
+
+    Optional<CalendarEvent> findByIdAndCreatorUserId(Long id, Long creatorUserId);
 }

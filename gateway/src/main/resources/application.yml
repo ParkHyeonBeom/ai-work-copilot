@@ -25,6 +25,14 @@ spring:
           uri: ${BRIEFING_SERVICE_URL:http://localhost:8084}
           predicates:
             - Path=/api/briefings/**
+        - id: chat-service
+          uri: ${CHAT_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/chat/**
+        - id: chat-service-websocket
+          uri: ${CHAT_SERVICE_WS_URL:ws://localhost:8085}
+          predicates:
+            - Path=/ws/chat/**
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
       globalcors:
@@ -87,6 +95,14 @@ spring:
           uri: http://briefing-service:8084
           predicates:
             - Path=/api/briefings/**
+        - id: chat-service
+          uri: http://chat-service:8085
+          predicates:
+            - Path=/api/chat/**
+        - id: chat-service-websocket
+          uri: ws://chat-service:8085
+          predicates:
+            - Path=/ws/chat/**
         - id: frontend
           uri: http://frontend:80
           predicates:
