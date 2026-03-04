@@ -39,7 +39,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              AI Work Copilot
+              WorkBridge
             </h1>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               AI가 캘린더, 이메일, 드라이브를 분석하여
@@ -89,7 +89,7 @@ export default function LoginPage() {
 
           {/* Footer */}
           <p className="mt-6 text-xs text-center text-gray-400 dark:text-gray-600">
-            AI Work Copilot &mdash; 스마트한 업무 시작
+            WorkBridge &mdash; 사내 업무 통합 플랫폼
           </p>
         </div>
       </div>
