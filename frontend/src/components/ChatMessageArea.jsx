@@ -1,8 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { chat } from '../api/endpoints';
 
+const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+const EDIT_TIME_LIMIT = 5 * 60 * 1000; // 5 minutes
+
+// 백엔드 LocalDateTime(UTC, timezone 없음) → 브라우저 로컬 시간 변환
+function parseUtcDate(dateStr) {
+  if (!dateStr) return null;
+  // 이미 Z 또는 +/- offset이 있으면 그대로 파싱
+  if (dateStr.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
+    return new Date(dateStr);
+  }
+  // timezone 없는 경우 UTC로 취급
+  return new Date(dateStr + 'Z');
+}
+
 function DateSeparator({ date }) {
-  const d = new Date(date);
+  const d = parseUtcDate(date);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
@@ -103,6 +117,66 @@ function ReplyBlock({ replyTo }) {
   );
 }
 
+function EmojiPicker({ onSelect }) {
+  return (
+    <div className="flex gap-0.5 p-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+      {EMOJIS.map((emoji) => (
+        <button
+          key={emoji}
+          onClick={() => onSelect(emoji)}
+          className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm"
+        >
+          {emoji}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ReactionBar({ reactions, currentUserId, onReaction }) {
+  if (!reactions || reactions.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {reactions.map((r) => (
+        <button
+          key={r.emoji}
+          onClick={() => onReaction(r.emoji)}
+          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] transition-colors ${
+            r.myReaction
+              ? 'bg-primary-100 dark:bg-primary-500/20 border border-primary-300 dark:border-primary-500'
+              : 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }`}
+          title={r.users?.map((u) => u.userName).join(', ')}
+        >
+          <span>{r.emoji}</span>
+          <span className="text-gray-600 dark:text-gray-400">{r.count}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function renderMessageContent(content) {
+  if (!content) return null;
+  const parts = content.split(/(@\S+)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('@')) {
+      return (
+        <span key={i} className="font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 rounded px-0.5">
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+}
+
+function PresenceDot({ online }) {
+  return (
+    <span className={`inline-block w-2 h-2 rounded-full ml-1 ${online ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+  );
+}
+
 export default function ChatMessageArea({
   messages,
   currentUserId,
@@ -113,11 +187,17 @@ export default function ChatMessageArea({
   typingUsers,
   onReply,
   onDelete,
+  onEdit,
+  onReaction,
+  onlineUsers,
 }) {
   const bottomRef = useRef(null);
   const containerRef = useRef(null);
   const prevHeightRef = useRef(0);
   const [contextMenu, setContextMenu] = useState(null);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [emojiPickerMessageId, setEmojiPickerMessageId] = useState(null);
 
   // Auto-scroll to bottom on new messages (only if near bottom)
   useEffect(() => {
@@ -151,16 +231,49 @@ export default function ChatMessageArea({
   };
 
   const handleContextMenu = (e, msg) => {
-    if (msg.senderUserId !== currentUserId || msg.deleted) return;
+    if (msg.deleted) return;
     e.preventDefault();
     setContextMenu({ x: e.clientX, y: e.clientY, message: msg });
   };
 
+  const canEdit = (msg) => {
+    // eslint-disable-next-line eqeqeq
+    if (msg.senderUserId != currentUserId) return false;
+    if (msg.type !== 'TEXT' || msg.deleted) return false;
+    if (!msg.createdAt) return false;
+    const elapsed = Date.now() - parseUtcDate(msg.createdAt).getTime();
+    return elapsed < EDIT_TIME_LIMIT;
+  };
+
+  const startEdit = (msg) => {
+    setEditingMessageId(msg.id);
+    setEditText(msg.content);
+  };
+
+  const submitEdit = () => {
+    if (editingMessageId && editText.trim()) {
+      onEdit?.(editingMessageId, editText.trim());
+    }
+    setEditingMessageId(null);
+    setEditText('');
+  };
+
+  const cancelEdit = () => {
+    setEditingMessageId(null);
+    setEditText('');
+  };
+
   useEffect(() => {
-    const close = () => setContextMenu(null);
+    const close = (e) => {
+      setContextMenu(null);
+      // Close emoji picker when clicking outside
+      if (emojiPickerMessageId && !e.target.closest('.emoji-picker-container')) {
+        setEmojiPickerMessageId(null);
+      }
+    };
     window.addEventListener('click', close);
     return () => window.removeEventListener('click', close);
-  }, []);
+  }, [emojiPickerMessageId]);
 
   if (loading) {
     return (
@@ -199,22 +312,25 @@ export default function ChatMessageArea({
       )}
 
       {messages.map((msg, idx) => {
-        const isMine = msg.senderUserId === currentUserId;
+        // eslint-disable-next-line eqeqeq
+        const isMine = msg.senderUserId == currentUserId;
         const isSystem = msg.type === 'SYSTEM';
+        const isEditing = editingMessageId === msg.id;
+        const senderOnline = onlineUsers instanceof Set ? onlineUsers.has(msg.senderUserId) : false;
 
         // Date separator
         let showDateSeparator = false;
         if (idx === 0) {
           showDateSeparator = true;
         } else {
-          const prevDate = new Date(messages[idx - 1].createdAt).toDateString();
-          const curDate = new Date(msg.createdAt).toDateString();
+          const prevDate = parseUtcDate(messages[idx - 1].createdAt).toDateString();
+          const curDate = parseUtcDate(msg.createdAt).toDateString();
           if (prevDate !== curDate) showDateSeparator = true;
         }
 
         if (isSystem) {
           return (
-            <div key={msg.id || idx}>
+            <div key={msg.id || idx} id={`msg-${msg.id}`}>
               {showDateSeparator && msg.createdAt && <DateSeparator date={msg.createdAt} />}
               <div className="flex justify-center">
                 <span className="text-[11px] text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
@@ -226,7 +342,7 @@ export default function ChatMessageArea({
         }
 
         return (
-          <div key={msg.id || idx}>
+          <div key={msg.id || idx} id={`msg-${msg.id}`} className="transition-colors duration-500">
             {showDateSeparator && msg.createdAt && <DateSeparator date={msg.createdAt} />}
             <div
               className={`flex ${isMine ? 'justify-end' : 'justify-start'} group mb-1`}
@@ -234,8 +350,9 @@ export default function ChatMessageArea({
             >
               <div className={`max-w-[70%] ${isMine ? 'order-2' : ''}`}>
                 {!isMine && (
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-0.5 ml-1">
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-0.5 ml-1 flex items-center">
                     {msg.senderName || '알 수 없음'}
+                    <PresenceDot online={senderOnline} />
                   </p>
                 )}
 
@@ -243,7 +360,7 @@ export default function ChatMessageArea({
                 {msg.replyTo && <ReplyBlock replyTo={msg.replyTo} />}
 
                 <div className="flex items-end gap-1">
-                  {/* Action buttons (visible on hover) - for own messages on left */}
+                  {/* Action buttons for own messages */}
                   {isMine && !msg.deleted && (
                     <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                       <button
@@ -255,6 +372,31 @@ export default function ChatMessageArea({
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
                         </svg>
                       </button>
+                      {canEdit(msg) && (
+                        <button
+                          onClick={() => startEdit(msg)}
+                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded"
+                          title="수정"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                          </svg>
+                        </button>
+                      )}
+                      <div className="relative emoji-picker-container">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEmojiPickerMessageId(emojiPickerMessageId === msg.id ? null : msg.id); }}
+                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded"
+                          title="리액션"
+                        >
+                          <span className="text-xs">😊</span>
+                        </button>
+                        {emojiPickerMessageId === msg.id && (
+                          <div className="absolute bottom-full right-0 mb-1 z-50" onClick={(e) => e.stopPropagation()}>
+                            <EmojiPicker onSelect={(emoji) => { onReaction?.(msg.id, emoji); setEmojiPickerMessageId(null); }} />
+                          </div>
+                        )}
+                      </div>
                       <button
                         onClick={() => onDelete?.(msg.id)}
                         className="p-1 text-gray-400 hover:text-red-500 rounded"
@@ -267,23 +409,44 @@ export default function ChatMessageArea({
                     </div>
                   )}
 
-                  <div
-                    className={`px-3 py-2 rounded-2xl text-sm break-words ${
-                      msg.deleted
-                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 italic'
-                        : isMine
-                          ? 'bg-primary-500 text-white rounded-br-md'
-                          : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-bl-md'
-                    }`}
-                  >
-                    {msg.deleted ? (
-                      <span className="text-xs">삭제된 메시지입니다</span>
-                    ) : msg.type === 'FILE' ? (
-                      <FileMessage content={msg.content} />
-                    ) : (
-                      <span className="whitespace-pre-wrap">{msg.content}</span>
-                    )}
-                  </div>
+                  {isEditing ? (
+                    <div className="flex-1">
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(); }
+                          if (e.key === 'Escape') cancelEdit();
+                        }}
+                        autoFocus
+                        rows={2}
+                        className="w-full px-3 py-2 text-sm border border-primary-300 dark:border-primary-500 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 resize-none"
+                      />
+                      <div className="flex gap-1 mt-1">
+                        <button onClick={submitEdit} className="text-[10px] px-2 py-0.5 bg-primary-500 text-white rounded">저장</button>
+                        <button onClick={cancelEdit} className="text-[10px] px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">취소</button>
+                        <span className="text-[10px] text-gray-400 ml-1">Enter 저장, Esc 취소</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className={`px-3 py-2 rounded-2xl text-sm break-words ${
+                        msg.deleted
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 italic'
+                          : isMine
+                            ? 'bg-primary-500 text-white rounded-br-md'
+                            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-bl-md'
+                      }`}
+                    >
+                      {msg.deleted ? (
+                        <span className="text-xs">삭제된 메시지입니다</span>
+                      ) : msg.type === 'FILE' ? (
+                        <FileMessage content={msg.content} />
+                      ) : (
+                        <span className="whitespace-pre-wrap">{renderMessageContent(msg.content)}</span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Action buttons for others' messages */}
                   {!isMine && !msg.deleted && (
@@ -297,14 +460,38 @@ export default function ChatMessageArea({
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
                         </svg>
                       </button>
+                      <div className="relative emoji-picker-container">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEmojiPickerMessageId(emojiPickerMessageId === msg.id ? null : msg.id); }}
+                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded"
+                          title="리액션"
+                        >
+                          <span className="text-xs">😊</span>
+                        </button>
+                        {emojiPickerMessageId === msg.id && (
+                          <div className="absolute bottom-full left-0 mb-1 z-50" onClick={(e) => e.stopPropagation()}>
+                            <EmojiPicker onSelect={(emoji) => { onReaction?.(msg.id, emoji); setEmojiPickerMessageId(null); }} />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
 
+                {/* Reaction bar */}
+                {!msg.deleted && (
+                  <ReactionBar
+                    reactions={msg.reactions}
+                    currentUserId={currentUserId}
+                    onReaction={(emoji) => onReaction?.(msg.id, emoji)}
+                  />
+                )}
+
                 <p className={`text-[10px] text-gray-400 dark:text-gray-600 mt-0.5 ${isMine ? 'text-right mr-1' : 'ml-1'}`}>
                   {msg.createdAt
-                    ? new Date(msg.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                    ? parseUtcDate(msg.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
                     : ''}
+                  {msg.editedAt && <span className="ml-1 italic">(수정됨)</span>}
                 </p>
               </div>
             </div>
@@ -340,6 +527,14 @@ export default function ChatMessageArea({
           >
             답장
           </button>
+          {canEdit(contextMenu.message) && (
+            <button
+              onClick={() => { startEdit(contextMenu.message); setContextMenu(null); }}
+              className="w-full text-left px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              수정
+            </button>
+          )}
           {contextMenu.message.senderUserId === currentUserId && (
             <button
               onClick={() => { onDelete?.(contextMenu.message.id); setContextMenu(null); }}
