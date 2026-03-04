@@ -27,22 +27,22 @@ resources:
 images:
 - name: ghcr.io/parkhyeonbeom/workcopilot-ai-router-service
   newName: ghcr.io/parkhyeonbeom/workcopilot-ai-router-service
-  newTag: f83eb7d
+  newTag: dec6f3d
 - name: ghcr.io/parkhyeonbeom/workcopilot-briefing-service
   newName: ghcr.io/parkhyeonbeom/workcopilot-briefing-service
-  newTag: f83eb7d
+  newTag: dec6f3d
 - name: ghcr.io/parkhyeonbeom/workcopilot-chat-service
   newName: ghcr.io/parkhyeonbeom/workcopilot-chat-service
-  newTag: f83eb7d
+  newTag: dec6f3d
 - name: ghcr.io/parkhyeonbeom/workcopilot-frontend
   newName: ghcr.io/parkhyeonbeom/workcopilot-frontend
-  newTag: f83eb7d
+  newTag: dec6f3d
 - name: ghcr.io/parkhyeonbeom/workcopilot-gateway
   newName: ghcr.io/parkhyeonbeom/workcopilot-gateway
-  newTag: f83eb7d
+  newTag: dec6f3d
 - name: ghcr.io/parkhyeonbeom/workcopilot-integration-service
   newName: ghcr.io/parkhyeonbeom/workcopilot-integration-service
-  newTag: f83eb7d
+  newTag: dec6f3d
 - name: ghcr.io/parkhyeonbeom/workcopilot-user-service
   newName: ghcr.io/parkhyeonbeom/workcopilot-user-service
-  newTag: f83eb7d
+  newTag: dec6f3d
