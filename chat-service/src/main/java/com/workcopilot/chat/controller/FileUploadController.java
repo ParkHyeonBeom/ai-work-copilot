@@ -39,15 +39,32 @@ public class FileUploadController {
 
     @GetMapping("/{fileId}/download")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId) {
+        ChatFile chatFile = chatFileService.getFile(fileId);
         Resource resource = chatFileService.downloadFile(fileId);
 
-        String encodedFileName = URLEncoder.encode(resource.getFilename(), StandardCharsets.UTF_8)
-                .replace("+", "%20");
+        String mimeType = chatFile.getMimeType();
+        boolean isImage = mimeType != null && mimeType.startsWith("image/");
 
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename*=UTF-8''" + encodedFileName)
-                .body(resource);
+        MediaType contentType;
+        try {
+            contentType = MediaType.parseMediaType(mimeType != null ? mimeType : "application/octet-stream");
+        } catch (Exception e) {
+            contentType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        String encodedFileName = URLEncoder.encode(
+                chatFile.getOriginalFileName(), StandardCharsets.UTF_8).replace("+", "%20");
+
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok().contentType(contentType);
+
+        if (isImage) {
+            // Images: inline display (no download prompt)
+            builder.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename*=UTF-8''" + encodedFileName);
+        } else {
+            // Other files: force download
+            builder.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName);
+        }
+
+        return builder.body(resource);
     }
 }

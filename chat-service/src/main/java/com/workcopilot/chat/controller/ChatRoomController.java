@@ -77,6 +77,16 @@ public class ChatRoomController {
         return ApiResponse.ok(null, "읽음 처리되었습니다.");
     }
 
+    @PutMapping("/{roomId}/messages/{messageId}")
+    public ApiResponse<ChatMessageDto> editMessage(Authentication authentication,
+                                                    @PathVariable Long roomId,
+                                                    @PathVariable Long messageId,
+                                                    @RequestBody EditMessageRequest request) {
+        Long userId = (Long) authentication.getPrincipal();
+        ChatMessageDto edited = chatMessageService.editMessage(userId, messageId, request.content());
+        return ApiResponse.ok(edited);
+    }
+
     @DeleteMapping("/{roomId}/messages/{messageId}")
     public ApiResponse<ChatMessageDto> deleteMessage(Authentication authentication,
                                                       @PathVariable Long roomId,
@@ -84,5 +94,16 @@ public class ChatRoomController {
         Long userId = (Long) authentication.getPrincipal();
         ChatMessageDto deleted = chatMessageService.deleteMessage(userId, messageId);
         return ApiResponse.ok(deleted);
+    }
+
+    @GetMapping("/{roomId}/messages/search")
+    public ApiResponse<List<ChatMessageDto>> searchMessages(Authentication authentication,
+                                                             @PathVariable Long roomId,
+                                                             @RequestParam String keyword,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "20") int size) {
+        Long userId = (Long) authentication.getPrincipal();
+        List<ChatMessageDto> results = chatMessageService.searchMessages(userId, roomId, keyword, page, size);
+        return ApiResponse.ok(results);
     }
 }

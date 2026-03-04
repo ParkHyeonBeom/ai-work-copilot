@@ -53,7 +53,7 @@ export default function ChatPage() {
 
   // Fetch initial online users
   useEffect(() => {
-    chat.getOnlineUsers().then((res) => {
+    chat.getOnlineUsers?.()?.then((res) => {
       setOnlineUsers(new Set(res.data.data || []));
     }).catch(() => {});
   }, []);

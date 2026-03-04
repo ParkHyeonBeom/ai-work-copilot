@@ -4,6 +4,7 @@ services:
     image: mysql:8.0
     container_name: workcopilot-mysql
     environment:
+      TZ: Asia/Seoul
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
       MYSQL_USER: ${MYSQL_USER:-workcopilot}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-workcopilot_local}
@@ -24,6 +25,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: workcopilot-redis
+    environment:
+      TZ: Asia/Seoul
     ports:
       - "6379:6379"
     healthcheck:
@@ -43,6 +46,7 @@ services:
     ports:
       - "8081:8081"
     environment:
+      TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: mysql
       DB_PORT: 3306
@@ -74,6 +78,7 @@ services:
     ports:
       - "8082:8082"
     environment:
+      TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: mysql
       DB_PORT: 3306
@@ -98,6 +103,7 @@ services:
     ports:
       - "8083:8083"
     environment:
+      TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: mysql
       DB_PORT: 3306
@@ -123,6 +129,7 @@ services:
     ports:
       - "8084:8084"
     environment:
+      TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: mysql
       DB_PORT: 3306
@@ -146,6 +153,7 @@ services:
     ports:
       - "8085:8085"
     environment:
+      TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: mysql
       DB_PORT: 3306
@@ -170,6 +178,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: local
       JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
       USER_SERVICE_URL: http://user-service:8081

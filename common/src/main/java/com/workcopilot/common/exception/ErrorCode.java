@@ -46,7 +46,8 @@ public enum ErrorCode {
     CHAT_FILE_TOO_LARGE("CH003", "파일 크기가 10MB를 초과합니다.", 400),
     CHAT_FILE_TYPE_NOT_ALLOWED("CH004", "허용되지 않는 파일 형식입니다.", 400),
     CHAT_MESSAGE_NOT_FOUND("CH005", "메시지를 찾을 수 없습니다.", 404),
-    CHAT_NOT_MESSAGE_OWNER("CH006", "본인의 메시지만 삭제할 수 있습니다.", 403),
+    CHAT_NOT_MESSAGE_OWNER("CH006", "본인의 메시지만 수정/삭제할 수 있습니다.", 403),
+    CHAT_EDIT_TIME_EXPIRED("CH007", "수정 가능 시간(5분)이 지났습니다.", 400),
 
     // AI Agent
     AGENT_CONVERSATION_NOT_FOUND("AG001", "대화를 찾을 수 없습니다.", 404),
