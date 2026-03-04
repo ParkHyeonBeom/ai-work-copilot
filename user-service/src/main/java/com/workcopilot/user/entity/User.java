@@ -72,6 +72,10 @@ public class User extends BaseEntity {
         this.onboardingCompleted = true;
     }
 
+    public void updateGoogleId(String googleId) {
+        this.googleId = googleId;
+    }
+
     public void updateProfile(String name, String profileImageUrl) {
         this.name = name;
         this.profileImageUrl = profileImageUrl;
