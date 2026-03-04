@@ -49,7 +49,7 @@ export default function ChatInput({ onSend, onFileUpload, onTyping, disabled, re
       }
     }
 
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent?.isComposing) {
       e.preventDefault();
       handleSubmit(e);
     }
