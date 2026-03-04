@@ -114,7 +114,7 @@ export default function Layout() {
             </svg>
           </div>
           <span className="text-lg font-bold text-gray-900 dark:text-white">
-            AI Work Copilot
+            WorkBridge
           </span>
         </div>
 
@@ -172,7 +172,7 @@ export default function Layout() {
         {/* Bottom info */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-800">
           <div className="text-xs text-gray-400 dark:text-gray-600">
-            AI Work Copilot v0.1.0
+            WorkBridge v0.1.0
           </div>
         </div>
       </aside>
