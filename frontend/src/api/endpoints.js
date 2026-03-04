@@ -144,6 +144,17 @@ export const chat = {
 
   /** 파일 다운로드 URL */
   getFileDownloadUrl: (fileId) => `/api/chat/files/${fileId}/download`,
+
+  /** 메시지 수정 */
+  editMessage: (roomId, messageId, content) =>
+    client.put(`/chat/rooms/${roomId}/messages/${messageId}`, { messageId, content }),
+
+  /** 메시지 검색 */
+  searchMessages: (roomId, keyword, page = 0, size = 20) =>
+    client.get(`/chat/rooms/${roomId}/messages/search`, { params: { keyword, page, size } }),
+
+  /** 온라인 사용자 목록 */
+  getOnlineUsers: () => client.get('/chat/presence/online'),
 };
 
 // ─── AI Agent ─────────────────────────────────────────

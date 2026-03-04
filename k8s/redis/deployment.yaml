@@ -20,6 +20,9 @@ spec:
           image: redis:7-alpine
           ports:
             - containerPort: 6379
+          env:
+            - name: TZ
+              value: "Asia/Seoul"
           resources:
             requests:
               memory: "64Mi"

@@ -9,7 +9,7 @@ export default function ChatToast() {
   const location = useLocation();
 
   const handleNotification = useCallback((notification) => {
-    if (notification.type !== 'NEW_MESSAGE') return;
+    if (notification.type !== 'NEW_MESSAGE' && notification.type !== 'MENTION') return;
 
     // Don't show toast if already in that chat room
     const currentPath = location.pathname;
@@ -38,7 +38,7 @@ export default function ChatToast() {
 
   useEffect(() => {
     const handlePush = (notification) => {
-      if (notification.type !== 'NEW_MESSAGE') return;
+      if (notification.type !== 'NEW_MESSAGE' && notification.type !== 'MENTION') return;
       if (document.visibilityState === 'visible') return;
 
       if ('Notification' in window && Notification.permission === 'granted') {

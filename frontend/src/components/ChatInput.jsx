@@ -1,18 +1,54 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 
-export default function ChatInput({ onSend, onFileUpload, onTyping, disabled, replyTo, onCancelReply }) {
+export default function ChatInput({ onSend, onFileUpload, onTyping, disabled, replyTo, onCancelReply, participants }) {
   const [text, setText] = useState('');
+  const [mentionQuery, setMentionQuery] = useState(null); // null = not mentioning, string = query
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const [mentionStart, setMentionStart] = useState(-1);
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
   const lastTypingRef = useRef(0);
+
+  const filteredParticipants = useMemo(() => {
+    if (mentionQuery === null || !participants) return [];
+    return participants.filter((p) =>
+      p.userName && p.userName.toLowerCase().includes(mentionQuery.toLowerCase())
+    ).slice(0, 5);
+  }, [mentionQuery, participants]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!text.trim() || disabled) return;
     onSend(text);
     setText('');
+    setMentionQuery(null);
   };
 
   const handleKeyDown = (e) => {
+    // Mention autocomplete navigation
+    if (mentionQuery !== null && filteredParticipants.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev + 1) % filteredParticipants.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev - 1 + filteredParticipants.length) % filteredParticipants.length);
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        insertMention(filteredParticipants[mentionIndex].userName);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMentionQuery(null);
+        return;
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
@@ -22,10 +58,50 @@ export default function ChatInput({ onSend, onFileUpload, onTyping, disabled, re
     }
   };
 
-  const handleChange = (e) => {
-    setText(e.target.value);
+  const insertMention = (userName) => {
+    const before = text.substring(0, mentionStart);
+    const after = text.substring(textareaRef.current?.selectionStart || text.length);
+    const newText = `${before}@${userName} ${after}`;
+    setText(newText);
+    setMentionQuery(null);
+    setMentionIndex(0);
 
-    // Throttled typing indicator (1 second)
+    // Focus and move cursor
+    setTimeout(() => {
+      const pos = before.length + userName.length + 2; // @name + space
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(pos, pos);
+    }, 0);
+  };
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    setText(value);
+
+    // Detect @mention
+    const cursorPos = e.target.selectionStart;
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const atIndex = textBeforeCursor.lastIndexOf('@');
+
+    if (atIndex >= 0) {
+      const charBefore = atIndex > 0 ? textBeforeCursor[atIndex - 1] : ' ';
+      if (charBefore === ' ' || charBefore === '\n' || atIndex === 0) {
+        const query = textBeforeCursor.substring(atIndex + 1);
+        if (!query.includes(' ')) {
+          setMentionQuery(query);
+          setMentionStart(atIndex);
+          setMentionIndex(0);
+        } else {
+          setMentionQuery(null);
+        }
+      } else {
+        setMentionQuery(null);
+      }
+    } else {
+      setMentionQuery(null);
+    }
+
+    // Throttled typing indicator
     const now = Date.now();
     if (now - lastTypingRef.current > 1000) {
       lastTypingRef.current = now;
@@ -42,7 +118,7 @@ export default function ChatInput({ onSend, onFileUpload, onTyping, disabled, re
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+    <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 relative">
       {/* Reply preview */}
       {replyTo && (
         <div className="px-4 pt-2 flex items-center gap-2">
@@ -64,6 +140,29 @@ export default function ChatInput({ onSend, onFileUpload, onTyping, disabled, re
         </div>
       )}
 
+      {/* Mention autocomplete popup */}
+      {mentionQuery !== null && filteredParticipants.length > 0 && (
+        <div className="absolute bottom-full left-4 mb-1 w-60 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-50">
+          {filteredParticipants.map((p, i) => (
+            <button
+              key={p.userId}
+              type="button"
+              onClick={() => insertMention(p.userName)}
+              className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 ${
+                i === mentionIndex
+                  ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-[10px] font-medium text-gray-600 dark:text-gray-300 shrink-0">
+                {p.userName?.charAt(0)?.toUpperCase() || '?'}
+              </span>
+              <span className="truncate">{p.userName}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="px-4 py-3 flex items-end gap-2">
         <button
           type="button"
@@ -78,10 +177,11 @@ export default function ChatInput({ onSend, onFileUpload, onTyping, disabled, re
         <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
 
         <textarea
+          ref={textareaRef}
           value={text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder={disabled ? '연결 중...' : '메시지를 입력하세요'}
+          placeholder={disabled ? '연결 중...' : '메시지를 입력하세요 (@로 멘션)'}
           disabled={disabled}
           rows={1}
           className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"

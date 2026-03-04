@@ -21,6 +21,9 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+          env:
+            - name: TZ
+              value: "Asia/Seoul"
           resources:
             requests:
               memory: "64Mi"

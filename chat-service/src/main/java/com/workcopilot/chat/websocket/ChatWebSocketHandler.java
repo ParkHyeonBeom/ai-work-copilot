@@ -1,9 +1,10 @@
 package com.workcopilot.chat.websocket;
 
 import com.workcopilot.chat.dto.ChatMessageDto;
+import com.workcopilot.chat.dto.EditMessageRequest;
 import com.workcopilot.chat.dto.SendMessageRequest;
+import com.workcopilot.chat.dto.ToggleReactionRequest;
 import com.workcopilot.chat.entity.ChatParticipant;
-import com.workcopilot.chat.entity.ChatRoom;
 import com.workcopilot.chat.repository.ChatParticipantRepository;
 import com.workcopilot.chat.repository.ChatRoomRepository;
 import com.workcopilot.chat.service.ChatMessageService;
@@ -18,8 +19,10 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Controller
 @RequiredArgsConstructor
@@ -52,19 +55,92 @@ public class ChatWebSocketHandler {
         // Broadcast to room subscribers
         messagingTemplate.convertAndSend("/topic/room/" + roomId, messageDto);
 
-        // Get room name (eager, no lazy issue)
+        // Get room name
         String roomName = chatRoomRepository.findById(roomId)
                 .map(r -> r.getName() != null ? r.getName() : "채팅")
                 .orElse("채팅");
 
-        // Get participants once, reuse for both notifications and unread updates
+        // Get participants once
         List<ChatParticipant> participants = chatParticipantRepository.findByChatRoomId(roomId);
 
-        // Send notifications + unread updates to all participants except sender
+        // Send notifications + unread updates
         sendNotifications(roomId, userId, userName, roomName, messageDto, participants);
         sendUnreadUpdates(roomId, userId, participants);
 
+        // Send mention notifications
+        if (request.content() != null) {
+            Set<Long> mentionedUserIds = chatMessageService.extractMentionedUserIds(request.content(), roomId);
+            for (Long mentionedUserId : mentionedUserIds) {
+                if (mentionedUserId.equals(userId)) continue;
+                Map<String, Object> mentionNotification = new HashMap<>();
+                mentionNotification.put("type", "MENTION");
+                mentionNotification.put("roomId", roomId);
+                mentionNotification.put("roomName", roomName);
+                mentionNotification.put("senderName", userName != null ? userName : "User");
+                String preview = request.content();
+                if (preview.length() > 50) preview = preview.substring(0, 50) + "...";
+                mentionNotification.put("preview", preview);
+
+                messagingTemplate.convertAndSendToUser(
+                        String.valueOf(mentionedUserId),
+                        "/queue/notifications",
+                        mentionNotification
+                );
+            }
+        }
+
         log.debug("WebSocket 메시지 전송: roomId={}, sender={}", roomId, userId);
+    }
+
+    @MessageMapping("/chat.edit/{roomId}")
+    public void editMessage(@DestinationVariable Long roomId,
+                            @Payload EditMessageRequest request,
+                            SimpMessageHeaderAccessor headerAccessor) {
+        StompPrincipal principal = (StompPrincipal) headerAccessor.getUser();
+        if (principal == null) {
+            throw new IllegalStateException("인증되지 않은 사용자입니다.");
+        }
+
+        Long userId = principal.getUserId();
+
+        if (!chatParticipantRepository.existsByChatRoomIdAndUserId(roomId, userId)) {
+            throw new BusinessException(ErrorCode.CHAT_NOT_PARTICIPANT);
+        }
+
+        ChatMessageDto editedDto = chatMessageService.editMessage(userId, request.messageId(), request.content());
+
+        Map<String, Object> editEvent = Map.of(
+                "type", "EDITED",
+                "messageId", request.messageId(),
+                "message", editedDto
+        );
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, editEvent);
+
+        log.debug("메시지 수정 이벤트: roomId={}, messageId={}", roomId, request.messageId());
+    }
+
+    @MessageMapping("/chat.react/{roomId}")
+    public void toggleReaction(@DestinationVariable Long roomId,
+                               @Payload ToggleReactionRequest request,
+                               SimpMessageHeaderAccessor headerAccessor) {
+        StompPrincipal principal = (StompPrincipal) headerAccessor.getUser();
+        if (principal == null) {
+            throw new IllegalStateException("인증되지 않은 사용자입니다.");
+        }
+
+        Long userId = principal.getUserId();
+        String userName = principal.getUserName();
+
+        ChatMessageDto updatedDto = chatMessageService.toggleReaction(userId, userName, request.messageId(), request.emoji());
+
+        Map<String, Object> reactionEvent = Map.of(
+                "type", "REACTION",
+                "messageId", request.messageId(),
+                "message", updatedDto
+        );
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, reactionEvent);
+
+        log.debug("리액션 이벤트: roomId={}, messageId={}, emoji={}", roomId, request.messageId(), request.emoji());
     }
 
     @MessageMapping("/chat.delete/{roomId}")

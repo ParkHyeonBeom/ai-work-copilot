@@ -63,7 +63,7 @@
 |------|------|
 | Phase A: WebSocket Context Provider, Toast 알림, 날짜 구분선, Load More, 타이핑 표시 | ✅ 완료 |
 | Phase B: 메시지 삭제, 답장(Reply), 이미지 미리보기, 실시간 Unread, 브라우저 Push 알림 | ✅ 완료 |
-| Phase C: 메시지 수정, 리액션, D&D 파일, 검색, Presence, @멘션 | 🟣 예정 |
+| Phase C: 메시지 수정, 리액션, D&D 파일, 검색, Presence, @멘션 | ✅ 완료 |
 
 ---
 

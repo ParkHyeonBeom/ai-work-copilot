@@ -4,6 +4,8 @@ import com.workcopilot.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "chat_messages")
 @Getter
@@ -33,8 +35,15 @@ public class ChatMessage extends BaseEntity {
 
     private Long replyToMessageId;
 
+    private LocalDateTime editedAt;
+
     public void markAsDeleted() {
         this.deleted = true;
         this.content = null;
+    }
+
+    public void editContent(String newContent) {
+        this.content = newContent;
+        this.editedAt = LocalDateTime.now();
     }
 }

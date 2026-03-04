@@ -10,6 +10,7 @@ export function WebSocketProvider({ children }) {
   const [connected, setConnected] = useState(false);
   const subscriptionsRef = useRef(new Map());
   const notificationListenersRef = useRef(new Set());
+  const presenceListenersRef = useRef(new Set());
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -43,6 +44,16 @@ export function WebSocketProvider({ children }) {
             console.error('[WS] notification parse error:', e);
           }
         });
+
+        // Auto-subscribe to presence updates
+        stompClient.subscribe('/topic/presence', (message) => {
+          try {
+            const body = JSON.parse(message.body);
+            presenceListenersRef.current.forEach((listener) => listener(body));
+          } catch (e) {
+            console.error('[WS] presence parse error:', e);
+          }
+        });
       },
       onDisconnect: () => {
         console.log('[WS] Disconnected');
@@ -67,6 +78,7 @@ export function WebSocketProvider({ children }) {
       subscriptionsRef.current.forEach((sub) => sub.unsubscribe());
       subscriptionsRef.current.clear();
       notificationListenersRef.current.clear();
+      presenceListenersRef.current.clear();
       if (stompClient.active) {
         stompClient.deactivate();
       }
@@ -116,7 +128,12 @@ export function WebSocketProvider({ children }) {
     return () => notificationListenersRef.current.delete(listener);
   }, []);
 
-  const value = { connected, subscribe, unsubscribe, publish, addNotificationListener };
+  const addPresenceListener = useCallback((listener) => {
+    presenceListenersRef.current.add(listener);
+    return () => presenceListenersRef.current.delete(listener);
+  }, []);
+
+  const value = { connected, subscribe, unsubscribe, publish, addNotificationListener, addPresenceListener };
 
   return <WebSocketContext.Provider value={value}>{children}</WebSocketContext.Provider>;
 }

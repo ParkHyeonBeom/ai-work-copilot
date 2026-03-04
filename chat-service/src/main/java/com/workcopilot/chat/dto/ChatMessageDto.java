@@ -2,6 +2,7 @@ package com.workcopilot.chat.dto;
 
 import com.workcopilot.chat.entity.ChatMessageType;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record ChatMessageDto(
         Long id,
@@ -13,6 +14,8 @@ public record ChatMessageDto(
         ChatFileDto file,
         boolean deleted,
         ReplyMessageDto replyTo,
+        List<ReactionDto> reactions,
+        LocalDateTime editedAt,
         LocalDateTime createdAt
 ) {
 }

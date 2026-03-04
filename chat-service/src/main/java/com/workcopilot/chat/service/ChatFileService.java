@@ -79,6 +79,11 @@ public class ChatFileService {
         return chatFile;
     }
 
+    public ChatFile getFile(Long fileId) {
+        return chatFileRepository.findById(fileId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "파일을 찾을 수 없습니다."));
+    }
+
     public Resource downloadFile(Long fileId) {
         ChatFile chatFile = chatFileRepository.findById(fileId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "파일을 찾을 수 없습니다."));

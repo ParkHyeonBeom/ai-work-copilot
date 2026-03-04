@@ -22,4 +22,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     long countByChatRoomIdAndIdGreaterThan(Long chatRoomId, Long lastReadMessageId);
 
     Optional<ChatMessage> findTopByChatRoomIdOrderByCreatedAtDesc(Long chatRoomId);
+
+    @Query("SELECT m FROM ChatMessage m WHERE m.chatRoom.id = :chatRoomId " +
+           "AND m.deleted = false AND m.content LIKE %:keyword% ORDER BY m.createdAt DESC")
+    List<ChatMessage> searchMessages(@Param("chatRoomId") Long chatRoomId,
+                                     @Param("keyword") String keyword, Pageable pageable);
 }
