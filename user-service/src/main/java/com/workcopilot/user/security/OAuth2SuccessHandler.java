@@ -49,7 +49,13 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String picture = oAuth2User.getAttribute("picture");
 
         User user = userRepository.findByGoogleId(googleId)
+                .or(() -> userRepository.findByEmail(email))
                 .orElseGet(() -> createUser(googleId, email, name, picture));
+
+        // googleId가 없거나 다른 경우 업데이트
+        if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {
+            user.updateGoogleId(googleId);
+        }
 
         user.updateProfile(name, picture);
 
