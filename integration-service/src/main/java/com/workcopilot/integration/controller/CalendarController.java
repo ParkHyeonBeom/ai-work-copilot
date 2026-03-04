@@ -74,4 +74,22 @@ public class CalendarController {
         Long userId = (Long) authentication.getPrincipal();
         return ApiResponse.ok(calendarService.createEvent(userId, request));
     }
+
+    @PutMapping("/events/{eventId}")
+    public ApiResponse<CalendarEventDto> updateEvent(
+            Authentication authentication,
+            @PathVariable Long eventId,
+            @Valid @RequestBody CreateEventRequest request) {
+        Long userId = (Long) authentication.getPrincipal();
+        return ApiResponse.ok(calendarService.updateEvent(userId, eventId, request));
+    }
+
+    @DeleteMapping("/events/{eventId}")
+    public ApiResponse<Void> deleteEvent(
+            Authentication authentication,
+            @PathVariable Long eventId) {
+        Long userId = (Long) authentication.getPrincipal();
+        calendarService.deleteEvent(userId, eventId);
+        return ApiResponse.ok(null);
+    }
 }

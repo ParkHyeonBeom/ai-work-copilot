@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { admin } from '../api/endpoints';
+import { admin, chat } from '../api/endpoints';
+import useWebSocket from '../hooks/useWebSocket';
 import Header from './Header';
 
 const navItems = [
@@ -32,13 +33,34 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    to: '/chat',
+    label: '채팅',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+      </svg>
+    ),
+  },
+  {
+    to: '/agent',
+    label: 'AI 어시스턴트',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+      </svg>
+    ),
+  },
 ];
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { addNotificationListener } = useWebSocket();
   const isAdmin = user?.role === 'ADMIN';
 
   // 관리자일 때 승인 대기 유저 수 조회
@@ -48,6 +70,25 @@ export default function Layout() {
       .then((res) => setPendingCount(res.data.data?.length || 0))
       .catch(() => {});
   }, [isAdmin]);
+
+  // 채팅 안읽은 수 조회 (마운트 + 경로 변경 시)
+  useEffect(() => {
+    chat.getUnreadCount()
+      .then((res) => setChatUnreadCount(res.data.data || 0))
+      .catch(() => {});
+  }, [location.pathname]);
+
+  // WebSocket 알림으로 안읽은 수 실시간 업데이트
+  useEffect(() => {
+    const removeListener = addNotificationListener((notification) => {
+      if (notification.type === 'UNREAD_UPDATE' || notification.type === 'NEW_MESSAGE') {
+        chat.getUnreadCount()
+          .then((res) => setChatUnreadCount(res.data.data || 0))
+          .catch(() => {});
+      }
+    });
+    return removeListener;
+  }, [addNotificationListener]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -94,6 +135,11 @@ export default function Layout() {
             >
               {item.icon}
               {item.label}
+              {item.to === '/chat' && chatUnreadCount > 0 && (
+                <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                  {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
+                </span>
+              )}
             </NavLink>
           ))}
 

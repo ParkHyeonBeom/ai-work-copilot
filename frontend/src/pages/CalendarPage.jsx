@@ -6,6 +6,12 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { calendar } from '../api/endpoints';
 import EventCreateModal from '../components/EventCreateModal';
 
+const sourceColors = {
+  GOOGLE: { bg: '#3b82f6', border: '#2563eb', label: 'Google' },
+  LOCAL: { bg: '#22c55e', border: '#16a34a', label: '사내' },
+  BOTH: { bg: '#8b5cf6', border: '#7c3aed', label: '연동' },
+};
+
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -21,18 +27,25 @@ export default function CalendarPage() {
       const data = res.data.data || [];
 
       setEvents(
-        data.map((e) => ({
-          id: e.id,
-          title: e.title,
-          start: e.startTime,
-          end: e.endTime,
-          allDay: e.isAllDay || e.allDay,
-          extendedProps: {
-            description: e.description,
-            location: e.location,
-            attendees: e.attendees,
-          },
-        }))
+        data.map((e) => {
+          const source = e.source || 'GOOGLE';
+          const colors = sourceColors[source] || sourceColors.GOOGLE;
+          return {
+            id: e.id,
+            title: e.title,
+            start: e.startTime,
+            end: e.endTime,
+            allDay: e.isAllDay || e.allDay,
+            backgroundColor: colors.bg,
+            borderColor: colors.border,
+            extendedProps: {
+              description: e.description,
+              location: e.location,
+              attendees: e.attendees,
+              source,
+            },
+          };
+        })
       );
     } catch (err) {
       console.error('일정 조회 실패:', err);
@@ -49,6 +62,8 @@ export default function CalendarPage() {
   const handleCreateEvent = async (payload) => {
     try {
       await calendar.createEvent(payload);
+      const source = payload.source || 'GOOGLE';
+      const colors = sourceColors[source] || sourceColors.GOOGLE;
       setEvents((prev) => [
         ...prev,
         {
@@ -57,6 +72,9 @@ export default function CalendarPage() {
           start: payload.startTime,
           end: payload.endTime,
           allDay: payload.isAllDay,
+          backgroundColor: colors.bg,
+          borderColor: colors.border,
+          extendedProps: { source },
         },
       ]);
     } catch (err) {
@@ -73,6 +91,17 @@ export default function CalendarPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             팀 일정을 확인하고 새 일정을 생성합니다.
           </p>
+          <div className="flex items-center gap-4 mt-2">
+            {Object.entries(sourceColors).map(([key, val]) => (
+              <div key={key} className="flex items-center gap-1.5">
+                <span
+                  className="w-3 h-3 rounded-full inline-block"
+                  style={{ backgroundColor: val.bg }}
+                />
+                <span className="text-xs text-gray-500 dark:text-gray-400">{val.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
         <button
           onClick={() => {
@@ -114,7 +143,7 @@ export default function CalendarPage() {
           }}
           dayMaxEventRows={3}
           eventDisplay="block"
-          eventClassNames="!bg-primary-500 !border-primary-500 !text-white !text-xs !rounded-md !px-1"
+          eventClassNames="!text-white !text-xs !rounded-md !px-1"
         />
       </div>
 

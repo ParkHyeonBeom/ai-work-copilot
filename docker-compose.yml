@@ -1,0 +1,208 @@
+services:
+  # --- Infrastructure ---
+  mysql:
+    image: mysql:8.0
+    container_name: workcopilot-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_USER: ${MYSQL_USER:-workcopilot}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-workcopilot_local}
+      MYSQL_DATABASE: workcopilot
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - workcopilot
+
+  redis:
+    image: redis:7-alpine
+    container_name: workcopilot-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - workcopilot
+
+  # --- Backend Services ---
+  user-service:
+    build:
+      context: ./user-service/target
+      dockerfile: ../Dockerfile
+    container_name: workcopilot-user-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: workcopilot
+      DB_USERNAME: ${MYSQL_USER:-workcopilot}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-workcopilot_local}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your-client-id}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-your-client-secret}
+      OAUTH_REDIRECT_BASE_URL: http://localhost:5173
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-gusqja0213@gmail.com}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - workcopilot
+
+  integration-service:
+    build:
+      context: ./integration-service/target
+      dockerfile: ../Dockerfile
+    container_name: workcopilot-integration-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: workcopilot_integration
+      DB_USERNAME: ${MYSQL_USER:-workcopilot}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-workcopilot_local}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your-client-id}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-your-client-secret}
+      USER_SERVICE_URL: http://user-service:8081
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - workcopilot
+
+  ai-router-service:
+    build:
+      context: ./ai-router-service/target
+      dockerfile: ../Dockerfile
+    container_name: workcopilot-ai-router-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: workcopilot_ai
+      DB_USERNAME: ${MYSQL_USER:-workcopilot}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-workcopilot_local}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
+      GEMINI_ENABLED: ${GEMINI_ENABLED:-true}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      INTEGRATION_SERVICE_URL: http://integration-service:8082
+      CHAT_SERVICE_URL: http://chat-service:8085
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - workcopilot
+
+  briefing-service:
+    build:
+      context: ./briefing-service/target
+      dockerfile: ../Dockerfile
+    container_name: workcopilot-briefing-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: workcopilot_briefing
+      DB_USERNAME: ${MYSQL_USER:-workcopilot}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-workcopilot_local}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
+      INTEGRATION_SERVICE_URL: http://integration-service:8082
+      AI_ROUTER_SERVICE_URL: http://ai-router-service:8083
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - workcopilot
+
+  chat-service:
+    build:
+      context: ./chat-service/target
+      dockerfile: ../Dockerfile
+    container_name: workcopilot-chat-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: workcopilot_chat
+      DB_USERNAME: ${MYSQL_USER:-workcopilot}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-workcopilot_local}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
+      CHAT_FILE_DIR: /data/chat-files
+    volumes:
+      - chat-files:/data/chat-files
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - workcopilot
+
+  gateway:
+    build:
+      context: ./gateway/target
+      dockerfile: ../Dockerfile
+    container_name: workcopilot-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-local-testing-only-change-in-production-minimum-256-bits}
+      USER_SERVICE_URL: http://user-service:8081
+      INTEGRATION_SERVICE_URL: http://integration-service:8082
+      AI_ROUTER_SERVICE_URL: http://ai-router-service:8083
+      BRIEFING_SERVICE_URL: http://briefing-service:8084
+      CHAT_SERVICE_URL: http://chat-service:8085
+      CHAT_SERVICE_WS_URL: ws://chat-service:8085
+    depends_on:
+      - user-service
+      - integration-service
+      - ai-router-service
+      - briefing-service
+      - chat-service
+    networks:
+      - workcopilot
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: workcopilot-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - gateway
+    networks:
+      - workcopilot
+
+volumes:
+  mysql-data:
+  chat-files:
+
+networks:
+  workcopilot:
+    driver: bridge

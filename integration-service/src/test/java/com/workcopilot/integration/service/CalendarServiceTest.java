@@ -11,6 +11,7 @@ import com.workcopilot.common.exception.BusinessException;
 import com.workcopilot.common.exception.ErrorCode;
 import com.workcopilot.integration.client.UserInfoClient;
 import com.workcopilot.integration.client.UserNotificationClient;
+import com.workcopilot.integration.dto.CalendarEventDto;
 import com.workcopilot.integration.google.GoogleCredentialProvider;
 import com.workcopilot.integration.repository.CalendarEventRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +21,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -58,28 +64,34 @@ class CalendarServiceTest {
     }
 
     @Test
-    @DisplayName("getTodayEvents_유효한유저ID_GoogleAPI호출시도")
-    void getTodayEvents_유효한유저ID_GoogleAPI호출시도() {
+    @DisplayName("getTodayEvents_GoogleAPI실패시_로컬이벤트만반환")
+    void getTodayEvents_GoogleAPI실패시_로컬이벤트만반환() {
         // given
         given(credentialProvider.getCredential(USER_ID)).willReturn(createMockCredential());
+        given(calendarEventRepository.findByCreatorUserIdAndStartTimeBetweenOrderByStartTimeAsc(any(), any(), any()))
+                .willReturn(Collections.emptyList());
 
-        // when & then - MockHttpTransport returns 403 -> IOException -> BusinessException
-        assertThatThrownBy(() -> calendarService.getTodayEvents(USER_ID))
-                .isInstanceOf(BusinessException.class);
+        // when
+        List<CalendarEventDto> result = calendarService.getTodayEvents(USER_ID);
 
+        // then
+        assertThat(result).isEmpty();
         verify(credentialProvider).getCredential(USER_ID);
     }
 
     @Test
-    @DisplayName("getUpcomingEvents_유효한유저ID_GoogleAPI호출시도")
-    void getUpcomingEvents_유효한유저ID_GoogleAPI호출시도() {
+    @DisplayName("getUpcomingEvents_GoogleAPI실패시_로컬이벤트만반환")
+    void getUpcomingEvents_GoogleAPI실패시_로컬이벤트만반환() {
         // given
         given(credentialProvider.getCredential(USER_ID)).willReturn(createMockCredential());
+        given(calendarEventRepository.findByCreatorUserIdAndStartTimeBetweenOrderByStartTimeAsc(any(), any(), any()))
+                .willReturn(Collections.emptyList());
 
-        // when & then
-        assertThatThrownBy(() -> calendarService.getUpcomingEvents(USER_ID, 7))
-                .isInstanceOf(BusinessException.class);
+        // when
+        List<CalendarEventDto> result = calendarService.getUpcomingEvents(USER_ID, 7);
 
+        // then
+        assertThat(result).isEmpty();
         verify(credentialProvider).getCredential(USER_ID);
     }
 

@@ -38,7 +38,19 @@ public enum ErrorCode {
     EMBEDDING_ERROR("AI002", "임베딩 생성에 실패했습니다.", 502),
 
     // Briefing
-    BRIEFING_NOT_FOUND("B001", "브리핑을 찾을 수 없습니다.", 404);
+    BRIEFING_NOT_FOUND("B001", "브리핑을 찾을 수 없습니다.", 404),
+
+    // Chat
+    CHAT_ROOM_NOT_FOUND("CH001", "채팅방을 찾을 수 없습니다.", 404),
+    CHAT_NOT_PARTICIPANT("CH002", "채팅방 참여자가 아닙니다.", 403),
+    CHAT_FILE_TOO_LARGE("CH003", "파일 크기가 10MB를 초과합니다.", 400),
+    CHAT_FILE_TYPE_NOT_ALLOWED("CH004", "허용되지 않는 파일 형식입니다.", 400),
+    CHAT_MESSAGE_NOT_FOUND("CH005", "메시지를 찾을 수 없습니다.", 404),
+    CHAT_NOT_MESSAGE_OWNER("CH006", "본인의 메시지만 삭제할 수 있습니다.", 403),
+
+    // AI Agent
+    AGENT_CONVERSATION_NOT_FOUND("AG001", "대화를 찾을 수 없습니다.", 404),
+    AGENT_CONTEXT_COLLECTION_FAILED("AG002", "컨텍스트 수집에 실패했습니다.", 502);
 
     private final String code;
     private final String message;

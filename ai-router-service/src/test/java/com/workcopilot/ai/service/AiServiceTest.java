@@ -171,7 +171,8 @@ class AiServiceTest {
                         "이번 주 금요일까지 프로젝트 진행상황을 보고해주세요.",
                         LocalDateTime.of(2026, 2, 24, 8, 30),
                         List.of("INBOX", "IMPORTANT"),
-                        true
+                        true,
+                        false
                 )
         );
 

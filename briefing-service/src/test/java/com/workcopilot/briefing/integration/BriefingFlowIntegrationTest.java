@@ -61,7 +61,7 @@ class BriefingFlowIntegrationTest {
                 List.of(new EmailDto(
                         "email-1", "pm@test.com", "배포 일정 확인",
                         "이번 주 금요일 배포 일정을 확인해주세요.",
-                        LocalDateTime.now().minusHours(2), List.of("INBOX", "IMPORTANT"), true
+                        LocalDateTime.now().minusHours(2), List.of("INBOX", "IMPORTANT"), true, false
                 )),
                 List.of(new DriveFileDto(
                         "file-1", "API 설계서.docx",

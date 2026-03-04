@@ -14,15 +14,10 @@ spring:
       on-profile: local
 
   datasource:
-    url: jdbc:h2:file:./data/userdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:workcopilot}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:workcopilot}
+    password: ${DB_PASSWORD:workcopilot_local}
 
   jpa:
     hibernate:
@@ -30,6 +25,7 @@ spring:
     show-sql: true
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
         default_batch_fetch_size: 100
 
@@ -47,7 +43,7 @@ spring:
               - https://www.googleapis.com/auth/calendar
               - https://www.googleapis.com/auth/gmail.readonly
               - https://www.googleapis.com/auth/drive.readonly
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: "${OAUTH_REDIRECT_BASE_URL:{baseUrl}}/login/oauth2/code/{registrationId}"
 
   data:
     redis:
@@ -70,7 +66,7 @@ jwt:
 
 app:
   frontend-url: http://localhost:5173
-  admin-email: ${ADMIN_EMAIL:admin@workcopilot.com}
+  admin-email: ${ADMIN_EMAIL:gusqja0213@gmail.com}
 
 ---
 spring:
@@ -79,14 +75,10 @@ spring:
       on-profile: k8s
 
   datasource:
-    url: jdbc:h2:file:/data/userdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  h2:
-    console:
-      enabled: false
+    url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:workcopilot}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:workcopilot}
+    password: ${DB_PASSWORD:workcopilot_local}
 
   jpa:
     hibernate:
@@ -94,6 +86,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: false
         default_batch_fetch_size: 100
 
@@ -134,7 +127,7 @@ jwt:
 
 app:
   frontend-url: https://nonnaval-tragicomical-eliana.ngrok-free.dev
-  admin-email: ${ADMIN_EMAIL:admin@workcopilot.com}
+  admin-email: ${ADMIN_EMAIL:gusqja0213@gmail.com}
 
 ---
 spring:
@@ -143,8 +136,8 @@ spring:
       on-profile: prod
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:workcopilot}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:workcopilot}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${DB_USERNAME:workcopilot}
     password: ${DB_PASSWORD:}
 
@@ -152,3 +145,6 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect

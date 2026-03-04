@@ -11,6 +11,11 @@ public record CalendarEventDto(
         LocalDateTime endTime,
         String location,
         List<String> attendees,
-        boolean isAllDay
+        boolean isAllDay,
+        String source
 ) {
+    public CalendarEventDto(String id, String title, String description, LocalDateTime startTime,
+                            LocalDateTime endTime, String location, List<String> attendees, boolean isAllDay) {
+        this(id, title, description, startTime, endTime, location, attendees, isAllDay, "GOOGLE");
+    }
 }

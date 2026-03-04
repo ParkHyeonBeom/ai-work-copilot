@@ -37,6 +37,12 @@ export const calendar = {
 
   /** 일정 생성 */
   createEvent: (data) => client.post('/integrations/calendar/events', data),
+
+  /** 일정 수정 (사내 DB 이벤트만) */
+  updateEvent: (eventId, data) => client.put(`/integrations/calendar/events/${eventId}`, data),
+
+  /** 일정 삭제 (사내 DB 이벤트만) */
+  deleteEvent: (eventId) => client.delete(`/integrations/calendar/events/${eventId}`),
 };
 
 // ─── Gmail ─────────────────────────────────────────────
@@ -96,4 +102,61 @@ export const briefings = {
     const token = localStorage.getItem('accessToken');
     return `/api/briefings/${id}/stream?token=${encodeURIComponent(token)}`;
   },
+};
+
+// ─── Chat ─────────────────────────────────────────────
+export const chat = {
+  /** 채팅방 생성 */
+  createRoom: (data) => client.post('/chat/rooms', data),
+
+  /** 내 채팅방 목록 */
+  getRooms: () => client.get('/chat/rooms'),
+
+  /** 채팅방 상세 */
+  getRoom: (roomId) => client.get(`/chat/rooms/${roomId}`),
+
+  /** 채팅방 나가기 */
+  leaveRoom: (roomId) => client.delete(`/chat/rooms/${roomId}`),
+
+  /** 멤버 초대 */
+  inviteMembers: (roomId, memberIds) =>
+    client.post(`/chat/rooms/${roomId}/invite`, { memberIds }),
+
+  /** 메시지 히스토리 (cursor 페이지네이션) */
+  getMessages: (roomId, cursor, size = 20) =>
+    client.get(`/chat/rooms/${roomId}/messages`, { params: { cursor, size } }),
+
+  /** 읽음 처리 */
+  markAsRead: (roomId) => client.post(`/chat/rooms/${roomId}/read`),
+
+  /** 전체 안읽은 메시지 수 */
+  getUnreadCount: () => client.get('/chat/unread'),
+
+  /** 파일 업로드 */
+  uploadFile: (roomId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('roomId', roomId);
+    return client.post('/chat/files/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  /** 파일 다운로드 URL */
+  getFileDownloadUrl: (fileId) => `/api/chat/files/${fileId}/download`,
+};
+
+// ─── AI Agent ─────────────────────────────────────────
+export const agent = {
+  /** 메시지 전송 + AI 응답 */
+  sendMessage: (data) => client.post('/ai/agent/chat', data),
+
+  /** 대화 목록 */
+  getConversations: () => client.get('/ai/agent/conversations'),
+
+  /** 대화 상세 (히스토리) */
+  getConversation: (id) => client.get(`/ai/agent/conversations/${id}`),
+
+  /** 대화 삭제 */
+  deleteConversation: (id) => client.delete(`/ai/agent/conversations/${id}`),
 };

@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/ai/agent/**").authenticated()
                         .requestMatchers(
                                 "/actuator/health",
                                 "/h2-console/**",

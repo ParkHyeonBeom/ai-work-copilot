@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
+import { WebSocketProvider } from './contexts/WebSocketContext';
 import Layout from './components/Layout';
+import ChatToast from './components/ChatToast';
 import LoginPage from './pages/LoginPage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import OnboardingPage from './pages/OnboardingPage';
@@ -11,6 +13,8 @@ import VerifyEmailPage from './pages/VerifyEmailPage';
 import RejectedPage from './pages/RejectedPage';
 import AdminPage from './pages/AdminPage';
 import CalendarPage from './pages/CalendarPage';
+import ChatPage from './pages/ChatPage';
+import AgentPage from './pages/AgentPage';
 
 /**
  * 인증이 필요한 라우트를 보호하는 컴포넌트
@@ -76,7 +80,10 @@ export default function App() {
         element={
           <ProtectedRoute>
             <OnboardedRoute>
-              <Layout />
+              <WebSocketProvider>
+                <ChatToast />
+                <Layout />
+              </WebSocketProvider>
             </OnboardedRoute>
           </ProtectedRoute>
         }
@@ -85,6 +92,10 @@ export default function App() {
         <Route path="/briefing/:id" element={<BriefingPage />} />
         <Route path="/briefings" element={<BriefingPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/chat/:roomId" element={<ChatPage />} />
+        <Route path="/agent" element={<AgentPage />} />
+        <Route path="/agent/:conversationId" element={<AgentPage />} />
         <Route path="/admin" element={<AdminPage />} />
       </Route>
 

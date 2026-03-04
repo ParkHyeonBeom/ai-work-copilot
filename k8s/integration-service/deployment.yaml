@@ -7,8 +7,6 @@ metadata:
     app: integration-service
 spec:
   replicas: 1
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app: integration-service
@@ -26,6 +24,19 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "k8s"
+            - name: DB_HOST
+              value: "mysql"
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: "workcopilot_integration"
+            - name: DB_USERNAME
+              value: "workcopilot"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -41,9 +52,6 @@ spec:
                 secretKeyRef:
                   name: google-oauth
                   key: GOOGLE_CLIENT_SECRET
-          volumeMounts:
-            - name: h2-data
-              mountPath: /data
           resources:
             requests:
               memory: "256Mi"
@@ -61,7 +69,3 @@ spec:
               port: 8082
             initialDelaySeconds: 60
             periodSeconds: 30
-      volumes:
-        - name: h2-data
-          persistentVolumeClaim:
-            claimName: integration-service-data

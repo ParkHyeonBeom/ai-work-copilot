@@ -13,6 +13,9 @@ jwt:
 integration-service:
   url: ${INTEGRATION_SERVICE_URL:http://localhost:8082}
 
+chat-service:
+  url: ${CHAT_SERVICE_URL:http://localhost:8085}
+
 ---
 spring:
   config:
@@ -25,59 +28,26 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
   datasource:
-    url: jdbc:h2:mem:airouterdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:workcopilot_ai}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:workcopilot}
+    password: ${DB_PASSWORD:workcopilot_local}
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
 
-  ai:
-    openai:
-      api-key: ${OPENAI_API_KEY:sk-dummy}
-      chat:
-        options:
-          model: gpt-4o
-          temperature: 0.3
-    anthropic:
-      api-key: ${ANTHROPIC_API_KEY:}
-      chat:
-        options:
-          model: claude-sonnet-4-20250514
-          temperature: 0.3
-    ollama:
-      base-url: ${OLLAMA_BASE_URL:http://100.95.227.98:11434}
-      init:
-        timeout: 120s
-        pull-model-strategy: never
-      connection:
-        timeout: 30s
-      request:
-        timeout: 180s
-      chat:
-        options:
-          model: llama3.1:8b-instruct-q4_K_M
-          num-predict: 4096
-      embedding:
-        options:
-          model: nomic-embed-text
-
 ai:
-  anthropic:
-    enabled: ${ANTHROPIC_ENABLED:false}
-  ollama:
-    enabled: ${OLLAMA_ENABLED:true}
+  gemini:
+    enabled: ${GEMINI_ENABLED:true}
+    api-key: ${GEMINI_API_KEY:}
+    model: gemini-2.5-flash
+    base-url: https://generativelanguage.googleapis.com
 
 milvus:
   host: ${MILVUS_HOST:localhost}
@@ -90,8 +60,8 @@ spring:
       on-profile: prod
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:workcopilot_ai}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:workcopilot_ai}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${DB_USERNAME:workcopilot}
     password: ${DB_PASSWORD:}
 
@@ -99,31 +69,21 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
 
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
-  ai:
-    openai:
-      api-key: ${OPENAI_API_KEY}
-      chat:
-        options:
-          model: gpt-4o
-          temperature: 0.3
-    ollama:
-      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
-      chat:
-        options:
-          model: llama3.1:8b-instruct-q4_K_M
-      embedding:
-        options:
-          model: nomic-embed-text
-
 ai:
-  ollama:
-    enabled: true
+  gemini:
+    enabled: ${GEMINI_ENABLED:true}
+    api-key: ${GEMINI_API_KEY:}
+    model: gemini-2.5-flash
+    base-url: https://generativelanguage.googleapis.com
 
 ---
 spring:
@@ -137,39 +97,27 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
   datasource:
-    url: jdbc:h2:mem:airouterdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:workcopilot_ai}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:workcopilot}
+    password: ${DB_PASSWORD:workcopilot_local}
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
-
-  ai:
-    openai:
-      api-key: ${OPENAI_API_KEY:sk-dummy}
-      chat:
-        options:
-          model: gpt-4o
-          temperature: 0.3
-    ollama:
-      base-url: ${OLLAMA_BASE_URL:http://100.95.227.98:11434}
-      init:
-        timeout: 120s
-        pull-model-strategy: never
-      connection:
-        timeout: 30s
-      request:
-        timeout: 180s
-      chat:
-        options:
-          model: llama3.1:8b-instruct-q4_K_M
-          num-predict: 4096
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
 
 integration-service:
   url: http://integration-service:8082
 
+chat-service:
+  url: http://chat-service:8085
+
 ai:
-  ollama:
-    enabled: ${OLLAMA_ENABLED:true}
+  gemini:
+    enabled: ${GEMINI_ENABLED:true}
+    api-key: ${GEMINI_API_KEY:}
+    model: gemini-2.5-flash
+    base-url: https://generativelanguage.googleapis.com

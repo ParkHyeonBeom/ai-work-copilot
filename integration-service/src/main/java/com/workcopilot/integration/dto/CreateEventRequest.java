@@ -1,5 +1,6 @@
 package com.workcopilot.integration.dto;
 
+import com.workcopilot.integration.entity.CalendarSource;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -13,6 +14,10 @@ public record CreateEventRequest(
         @NotNull LocalDateTime endTime,
         String location,
         List<String> attendeeEmails,
-        boolean isAllDay
+        boolean isAllDay,
+        CalendarSource source
 ) {
+    public CalendarSource source() {
+        return source != null ? source : CalendarSource.GOOGLE;
+    }
 }

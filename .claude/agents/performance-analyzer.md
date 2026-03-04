@@ -4,7 +4,7 @@
 
 ## 분석 항목
 
-### JPA/DB
+### JPA/QueryDsl/DB
 - N+1 쿼리: `@OneToMany`, `@ManyToOne` 관계에서 Lazy Loading으로 인한 다건 쿼리
   → 해결: `@EntityGraph`, `JOIN FETCH`, `default_batch_fetch_size`
 - 불필요한 전체 조회: `findAll()` 대신 페이징 `findAll(Pageable)` 사용

@@ -64,7 +64,7 @@ class BriefingServiceTest {
                         LocalDateTime.now(), LocalDateTime.now().plusHours(1),
                         "회의실A", List.of("user@test.com"), false)),
                 List.of(new EmailDto("m1", "sender@test.com", "제목", "내용",
-                        LocalDateTime.now(), List.of("INBOX"), false)),
+                        LocalDateTime.now(), List.of("INBOX"), false, true)),
                 List.of(new DriveFileDto("f1", "문서.docx", "application/vnd.google-apps.document",
                         LocalDateTime.now(), List.of("owner@test.com"), "https://link")),
                 LocalDateTime.now()
