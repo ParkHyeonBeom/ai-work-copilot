@@ -8,11 +8,15 @@ import ChatMessageArea from '../components/ChatMessageArea';
 import ChatInput from '../components/ChatInput';
 import ChatCreateModal from '../components/ChatCreateModal';
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIME_PREFIXES = ['image/', 'application/pdf', 'text/', 'application/zip', 'application/x-zip',
+  'application/msword', 'application/vnd.openxmlformats', 'application/vnd.ms-excel', 'application/vnd.ms-powerpoint'];
+
 export default function ChatPage() {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { connected, subscribe, unsubscribe, publish, addNotificationListener } = useWebSocket();
+  const { connected, subscribe, unsubscribe, publish, addNotificationListener, addPresenceListener } = useWebSocket();
 
   const [rooms, setRooms] = useState([]);
   const [currentRoom, setCurrentRoom] = useState(null);
@@ -24,7 +28,13 @@ export default function ChatPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
   const [replyTo, setReplyTo] = useState(null);
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [isDragging, setIsDragging] = useState(false);
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   const typingTimeoutsRef = useRef(new Map());
+  const dragCounterRef = useRef(0);
   const PAGE_SIZE = 20;
 
   // Fetch rooms
@@ -40,6 +50,29 @@ export default function ChatPage() {
   useEffect(() => {
     fetchRooms();
   }, [fetchRooms]);
+
+  // Fetch initial online users
+  useEffect(() => {
+    chat.getOnlineUsers().then((res) => {
+      setOnlineUsers(new Set(res.data.data || []));
+    }).catch(() => {});
+  }, []);
+
+  // Listen for presence updates
+  useEffect(() => {
+    if (!addPresenceListener) return;
+    const removeListener = addPresenceListener((event) => {
+      if (event.type === 'PRESENCE') {
+        setOnlineUsers((prev) => {
+          const next = new Set(prev);
+          if (event.online) next.add(event.userId);
+          else next.delete(event.userId);
+          return next;
+        });
+      }
+    });
+    return removeListener;
+  }, [addPresenceListener]);
 
   // Listen for unread updates from other rooms
   useEffect(() => {
@@ -58,12 +91,16 @@ export default function ChatPage() {
       setMessages([]);
       setHasMore(false);
       setReplyTo(null);
+      setSearchMode(false);
+      setSearchKeyword('');
+      setSearchResults([]);
       return;
     }
 
     const loadRoom = async () => {
       setLoading(true);
       setReplyTo(null);
+      setSearchMode(false);
       try {
         const [roomRes, msgRes] = await Promise.all([
           chat.getRoom(roomId),
@@ -113,9 +150,25 @@ export default function ChatPage() {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === msg.messageId
-              ? { ...m, deleted: true, content: '삭제된 메시지입니다' }
+              ? { ...m, deleted: true, content: '삭제된 메시지입니다', reactions: [] }
               : m
           )
+        );
+        return;
+      }
+
+      // Handle edit events
+      if (msg.type === 'EDITED' && msg.messageId && msg.message) {
+        setMessages((prev) =>
+          prev.map((m) => m.id === msg.messageId ? msg.message : m)
+        );
+        return;
+      }
+
+      // Handle reaction events
+      if (msg.type === 'REACTION' && msg.messageId && msg.message) {
+        setMessages((prev) =>
+          prev.map((m) => m.id === msg.messageId ? { ...m, reactions: msg.message.reactions } : m)
         );
         return;
       }
@@ -176,6 +229,20 @@ export default function ChatPage() {
 
   const handleFileUpload = async (file) => {
     if (!roomId) return;
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      alert('파일 크기가 10MB를 초과합니다.');
+      return;
+    }
+
+    // Validate MIME type
+    const isAllowed = ALLOWED_MIME_PREFIXES.some((prefix) => file.type.startsWith(prefix));
+    if (!isAllowed && file.type) {
+      alert('허용되지 않는 파일 형식입니다.');
+      return;
+    }
+
     try {
       const res = await chat.uploadFile(roomId, file);
       const fileData = res.data.data;
@@ -198,9 +265,63 @@ export default function ChatPage() {
     publish(`/app/chat.delete/${roomId}`, { messageId });
   }, [roomId, connected, publish]);
 
+  const handleEditMessage = useCallback((messageId, newContent) => {
+    if (!roomId || !connected) return;
+    publish(`/app/chat.edit/${roomId}`, { messageId, content: newContent });
+  }, [roomId, connected, publish]);
+
+  const handleReaction = useCallback((messageId, emoji) => {
+    if (!roomId || !connected) return;
+    publish(`/app/chat.react/${roomId}`, { messageId, emoji });
+  }, [roomId, connected, publish]);
+
   const handleReply = useCallback((msg) => {
     setReplyTo(msg);
   }, []);
+
+  // Search
+  const handleSearch = useCallback(async (keyword) => {
+    if (!roomId || !keyword.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    try {
+      const res = await chat.searchMessages(roomId, keyword.trim());
+      setSearchResults(res.data.data || []);
+    } catch (err) {
+      console.error('메시지 검색 실패:', err);
+    }
+  }, [roomId]);
+
+  // D&D handlers
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    dragCounterRef.current++;
+    setIsDragging(true);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    dragCounterRef.current = 0;
+
+    const files = Array.from(e.dataTransfer.files);
+    for (const file of files) {
+      await handleFileUpload(file);
+    }
+  };
 
   const handleRoomSelect = (id) => {
     navigate(`/chat/${id}`);
@@ -242,11 +363,30 @@ export default function ChatPage() {
           rooms={rooms}
           currentRoomId={roomId ? Number(roomId) : null}
           onSelect={handleRoomSelect}
+          onlineUsers={onlineUsers}
         />
       </div>
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-950 min-w-0">
+      <div
+        className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-950 min-w-0 relative"
+        onDragEnter={roomId ? handleDragEnter : undefined}
+        onDragOver={roomId ? handleDragOver : undefined}
+        onDragLeave={roomId ? handleDragLeave : undefined}
+        onDrop={roomId ? handleDrop : undefined}
+      >
+        {/* D&D Overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center border-2 border-dashed border-primary-500 bg-primary-500/10 rounded-lg">
+            <div className="text-center">
+              <svg className="w-12 h-12 text-primary-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+              <p className="text-sm font-medium text-primary-600 dark:text-primary-400">파일을 놓아서 업로드</p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="h-14 px-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center gap-3">
           <button
@@ -258,7 +398,7 @@ export default function ChatPage() {
             </svg>
           </button>
           {currentRoom ? (
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                 {currentRoom.name || '1:1 채팅'}
               </h3>
@@ -267,12 +407,74 @@ export default function ChatPage() {
               </p>
             </div>
           ) : (
-            <span className="text-sm text-gray-500 dark:text-gray-400">채팅방을 선택하세요</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400 flex-1">채팅방을 선택하세요</span>
+          )}
+          {roomId && (
+            <button
+              onClick={() => { setSearchMode(!searchMode); setSearchResults([]); setSearchKeyword(''); }}
+              className={`p-1.5 rounded-lg transition-colors ${searchMode ? 'text-primary-500 bg-primary-50 dark:bg-primary-500/10' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+              title="메시지 검색"
+            >
+              <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+            </button>
           )}
           {!connected && (
-            <span className="ml-auto text-xs text-amber-500">연결 중...</span>
+            <span className="text-xs text-amber-500">연결 중...</span>
           )}
         </div>
+
+        {/* Search Panel */}
+        {searchMode && (
+          <div className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(searchKeyword); if (e.key === 'Escape') { setSearchMode(false); setSearchResults([]); } }}
+                placeholder="메시지 검색..."
+                autoFocus
+                className="flex-1 px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+              <button
+                onClick={() => handleSearch(searchKeyword)}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg"
+              >
+                검색
+              </button>
+            </div>
+            {searchResults.length > 0 && (
+              <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
+                {searchResults.map((msg) => (
+                  <button
+                    key={msg.id}
+                    onClick={() => {
+                      // Scroll to message if loaded
+                      const el = document.getElementById(`msg-${msg.id}`);
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.classList.add('bg-yellow-100', 'dark:bg-yellow-900/30');
+                        setTimeout(() => el.classList.remove('bg-yellow-100', 'dark:bg-yellow-900/30'), 2000);
+                      }
+                    }}
+                    className="w-full text-left px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-medium text-gray-600 dark:text-gray-400">{msg.senderName}</span>
+                      <span className="text-[10px] text-gray-400">{msg.createdAt ? new Date(msg.createdAt.endsWith('Z') ? msg.createdAt : msg.createdAt + 'Z').toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                    </div>
+                    <p className="text-xs text-gray-700 dark:text-gray-300 truncate">{msg.content}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+            {searchResults.length === 0 && searchKeyword && (
+              <p className="mt-2 text-xs text-gray-400">검색 결과가 없습니다</p>
+            )}
+          </div>
+        )}
 
         {/* Messages */}
         {roomId ? (
@@ -287,6 +489,9 @@ export default function ChatPage() {
               typingUsers={typingUsers}
               onReply={handleReply}
               onDelete={handleDeleteMessage}
+              onEdit={handleEditMessage}
+              onReaction={handleReaction}
+              onlineUsers={onlineUsers}
             />
             <ChatInput
               onSend={handleSendMessage}
@@ -295,6 +500,7 @@ export default function ChatPage() {
               disabled={!connected}
               replyTo={replyTo}
               onCancelReply={() => setReplyTo(null)}
+              participants={currentRoom?.participants || []}
             />
           </>
         ) : (
