@@ -42,6 +42,10 @@ spec:
                 secretKeyRef:
                   name: jwt-secret
                   key: JWT_SECRET
+            - name: INTEGRATION_SERVICE_URL
+              value: "http://integration-service:8082"
+            - name: AI_ROUTER_SERVICE_URL
+              value: "http://ai-router-service:8083"
           resources:
             requests:
               memory: "256Mi"
